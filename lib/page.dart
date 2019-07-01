@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hayat_app/pages/articles.dart';
+import 'package:hayat_app/pages/articles/articles.dart';
 import 'package:hayat_app/pages/statistics.dart';
 import 'package:hayat_app/pages/tasks.dart';
 
