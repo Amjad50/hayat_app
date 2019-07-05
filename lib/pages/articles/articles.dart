@@ -1,117 +1,6 @@
 import 'package:flutter/material.dart';
-
-class ExpandableArticleImage extends StatelessWidget {
-  const ExpandableArticleImage(
-      {Key key,
-      this.title,
-      this.textColor,
-      this.tag,
-      this.img,
-      this.large = false})
-      : this._borderRadius = 0,
-        super(key: key);
-
-  const ExpandableArticleImage.withBorderRadius(
-      {Key key,
-      this.title,
-      this.textColor,
-      this.tag,
-      this.img,
-      this.large = false})
-      : this._borderRadius = 10,
-        super(key: key);
-
-  final String tag;
-  final Color textColor;
-  final String title;
-  final String img;
-  final bool large;
-  final double _borderRadius;
-
-  @override
-  Widget build(BuildContext context) {
-    return Hero(
-      tag: this.tag,
-      child: Container(
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-              horizontal: 15, vertical: this.large ? 25 : 15),
-          child: Material(
-            color: Colors.transparent,
-            child: Text(
-              title,
-              style:
-                  TextStyle(color: textColor, fontSize: this.large ? 40 : 20),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(this._borderRadius),
-          image: DecorationImage(
-            image: NetworkImage(this.img),
-            fit: BoxFit.cover,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class Article extends StatelessWidget {
-  const Article(
-      {Key key,
-      this.title = "",
-      this.large = false,
-      this.textColor = Colors.white,
-      @required this.img})
-      : super(key: key);
-
-  final String title;
-  final bool large;
-  final Color textColor;
-  final String img;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.all(6),
-      child: InkWell(
-        child: ExpandableArticleImage.withBorderRadius(
-          title: this.title,
-          textColor: this.textColor,
-          tag: this.title,
-          img: this.img,
-          large: this.large,
-        ),
-        onTap: () {
-          Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-            return Scaffold(
-              appBar: AppBar(
-                title: Text(this.title),
-              ),
-              body: Container(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    ExpandableArticleImage(
-                        title: this.title,
-                        textColor: this.textColor,
-                        tag: this.title,
-                        img: this.img,
-                        large: true),
-                    // TODO change the text to the article content
-                    Text("paragraph")
-                  ],
-                ),
-              ),
-            );
-          }));
-        },
-      ),
-    );
-  }
-}
+import 'package:hayat_app/pages/articles/article_card.dart';
+import 'package:hayat_app/pages/articles/article_view_page.dart';
 
 class ArticlesPage extends StatefulWidget {
   ArticlesPage({Key key}) : super(key: key);
@@ -129,7 +18,38 @@ class _ArticlesPageState extends State<ArticlesPage> {
     super.initState();
 
     // TODO change the articles and make article class holder
-    articles.addAll(["first", "second"]);
+    articles.addAll(["first", "second", "third"]);
+  }
+
+  Widget _buildArticleCardEntry(
+      {title, textColor = Colors.white, img, large = false}) {
+
+    var _outerCard = ArticleCard(
+      title: title,
+      textColor: textColor,
+      tag: title,
+      img: img,
+      large: large,
+    );
+
+    var _innerCard = ArticleCard.insideArticlePage(
+      title: title,
+      textColor: textColor,
+      tag: title,
+      img: img,
+    );
+
+    return Container(
+      margin: EdgeInsets.all(6),
+      child: InkWell(
+        child: _outerCard,
+        onTap: () {
+          Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+            return ArticleViewPage(_innerCard);
+          }));
+        },
+      ),
+    );
   }
 
   @override
@@ -140,7 +60,7 @@ class _ArticlesPageState extends State<ArticlesPage> {
         slivers: <Widget>[
           SliverFillViewport(
             delegate: SliverChildListDelegate([
-              Article(
+              _buildArticleCardEntry(
                   title: articles[0],
                   large: true,
                   img:
@@ -154,7 +74,7 @@ class _ArticlesPageState extends State<ArticlesPage> {
             delegate: SliverChildListDelegate(
               articles
                   .sublist(1)
-                  .map((e) => Article(
+                  .map((e) => _buildArticleCardEntry(
                       title: e,
                       textColor: Colors.black,
                       img:

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hayat_app/page.dart';
+import 'package:hayat_app/utils.dart';
 
 void main() => runApp(MainApp());
 
@@ -39,9 +40,9 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: makeAppBarHeroFix(AppBar(
         title: Text(widget.title),
-      ),
+      )),
       body: Container(
         child: allPages[_index].widget,
       ),
@@ -49,10 +50,10 @@ class _HomePageState extends State<HomePage> {
         items: allPages
             .map(
               (page) => BottomNavigationBarItem(
-                    backgroundColor: page.color,
-                    title: Text(page.label),
-                    icon: Icon(page.icon),
-                  ),
+                backgroundColor: page.color,
+                title: Text(page.label),
+                icon: Icon(page.icon),
+              ),
             )
             .toList(),
         currentIndex: _index,
