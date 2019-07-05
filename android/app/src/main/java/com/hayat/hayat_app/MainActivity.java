@@ -1,4 +1,4 @@
-package com.example.hayat_app;
+package com.hayat.hayat_app;
 
 import android.os.Bundle;
 import io.flutter.app.FlutterActivity;
