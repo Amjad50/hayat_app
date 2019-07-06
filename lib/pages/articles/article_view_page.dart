@@ -5,7 +5,6 @@ import 'package:hayat_app/pages/articles/article_card.dart';
 import 'package:hayat_app/pages/articles/article_data.dart';
 import 'package:hayat_app/utils.dart';
 
-
 const DATAKEY = 'data';
 // for markdown used '*', must keep up with firestore's 'default' entry
 const _ERROR_NO_ARTICLE_PAGE_FOUND = "**no** *such article is found*";
@@ -30,8 +29,11 @@ class ArticleViewPage extends StatelessWidget {
               margin: EdgeInsets.all(10),
               child: StreamBuilder<DocumentSnapshot>(
                 stream: this.article.articlePage.snapshots(),
-                builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
-                  if(snapshot.hasData && snapshot.data.exists && snapshot.data.data.containsKey(DATAKEY)) {
+                builder: (BuildContext context,
+                    AsyncSnapshot<DocumentSnapshot> snapshot) {
+                  if (snapshot.hasData &&
+                      snapshot.data.exists &&
+                      snapshot.data.data.containsKey(DATAKEY)) {
                     return MarkdownBody(data: snapshot.data.data[DATAKEY]);
                   }
                   return MarkdownBody(data: _ERROR_NO_ARTICLE_PAGE_FOUND);
