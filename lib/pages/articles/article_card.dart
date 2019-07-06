@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'package:hayat_app/utils.dart';
 
 class ArticleCard extends StatelessWidget {
   const ArticleCard(
@@ -19,7 +20,7 @@ class ArticleCard extends StatelessWidget {
         super(key: key);
 
   final String tag;
-  final Color textColor;
+  final String textColor;
   final String title;
   final String img;
   final bool large;
@@ -38,7 +39,7 @@ class ArticleCard extends StatelessWidget {
             child: Text(
               title,
               style:
-                  TextStyle(color: textColor, fontSize: this.large ? 40 : 20),
+                  TextStyle(color: hexColor(textColor), fontSize: this.large ? 40 : 20),
               textAlign: TextAlign.center,
             ),
           ),
