@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:hayat_app/pages/articles/article_data.dart';
 import 'package:hayat_app/utils.dart';
@@ -21,9 +22,8 @@ class ArticleCard extends StatelessWidget {
     return Hero(
       tag: this.article.heroTag,
       child: Container(
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-              horizontal: 15, vertical: this.large ? 25 : 15),
+        padding: EdgeInsets.symmetric(
+            horizontal: 15, vertical: this.large ? 25 : 15),
           child: Material(
             color: Colors.transparent,
             child: Text(
@@ -33,11 +33,10 @@ class ArticleCard extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
-        ),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(this._borderRadius),
           image: DecorationImage(
-            image: NetworkImage(this.article.img),
+            image: CachedNetworkImageProvider(this.article.img),
             fit: BoxFit.cover,
           ),
         ),
