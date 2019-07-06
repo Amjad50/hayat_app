@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:hayat_app/pages/articles/article_data.dart';
 import 'package:hayat_app/utils.dart';
 
@@ -24,15 +25,19 @@ class ArticleCard extends StatelessWidget {
       child: Container(
         padding: EdgeInsets.symmetric(
             horizontal: 15, vertical: this.large ? 25 : 15),
-          child: Material(
-            color: Colors.transparent,
-            child: Text(
-              this.article.title,
-              style: TextStyle(
-                  color: hexColor(this.article.textColor), fontSize: this.large ? 40 : 20),
-              textAlign: TextAlign.center,
+        child: Material(
+          color: Colors.transparent,
+          child: MarkdownBody(
+            data: this.article.title,
+            // TODO: make global styleSheet
+            styleSheet: MarkdownStyleSheet(
+              p: TextStyle(
+                color: hexColor(this.article.textColor),
+                fontSize: this.large ? 40 : 20,
+              ),
             ),
           ),
+        ),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(this._borderRadius),
           image: DecorationImage(

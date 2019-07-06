@@ -27,6 +27,9 @@ dependencies:
   # for caching images
   cached_network_image: ^1.0.0
 
+  # for articles markdown (better and easier to write)
+  flutter_markdown: ^0.2.0
+
   # firebase
   firebase_core: ^0.4.0
   cloud_firestore: ^0.12.0
