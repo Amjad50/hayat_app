@@ -7,8 +7,11 @@ import 'package:hayat_app/pages/articles/article_view_page.dart';
 const TITLE = 'title';
 const IMG = 'img';
 const TEXTCOLOR = 'textColor';
+const TAGS = 'tags';
+const PAGEREF = 'page';
 
-const ARTICLES_COLLECTION = 'articles';
+const ARTICLES_HEADERS_COLLECTION = 'articles_headers';
+const ARTICLES_PAGES_COLLECTION = 'articles_pages';
 
 /// setup the default values in case any of them is not present
 DocumentSnapshot _fillNotFoundData(DocumentSnapshot snapshot) {
@@ -19,6 +22,12 @@ DocumentSnapshot _fillNotFoundData(DocumentSnapshot snapshot) {
             'jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500';
   if (!snapshot.data.containsKey(TEXTCOLOR))
     snapshot.data[TEXTCOLOR] = "#ffffffff";
+
+  if(!snapshot.data.containsKey(PAGEREF))
+    snapshot.data[PAGEREF] = Firestore.instance.collection(ARTICLES_PAGES_COLLECTION).document('default');
+
+  if(!snapshot.data.containsKey(TAGS))
+    snapshot.data[TAGS] = List<dynamic>();
 
   return snapshot;
 }
@@ -49,7 +58,7 @@ class _ArticlesPageState extends State<ArticlesPage> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-      stream: Firestore.instance.collection(ARTICLES_COLLECTION).snapshots(),
+      stream: Firestore.instance.collection(ARTICLES_HEADERS_COLLECTION).snapshots(),
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
         if (snapshot.hasData) {
           int count = snapshot.data.documents.length;
@@ -61,10 +70,11 @@ class _ArticlesPageState extends State<ArticlesPage> {
                   delegate: SliverChildListDelegate([
                 _buildArticleCardEntry(
                   ArticleData(
-                    articleID: "",
+                    articlePage: first[PAGEREF],
                     title: first[TITLE],
                     textColor: first[TEXTCOLOR],
                     img: first[IMG],
+                    tags: first[TAGS],
                     heroTag: first.documentID
                   ),
                   large: true,
@@ -80,11 +90,12 @@ class _ArticlesPageState extends State<ArticlesPage> {
                       _fillNotFoundData(snapshot.data.documents[index + 1]);
                   return _buildArticleCardEntry(
                     ArticleData(
-                      articleID: "",
+                      articlePage: current[PAGEREF],
                       heroTag: current.documentID,
                       title: current[TITLE],
                       textColor: current[TEXTCOLOR],
                       img: current[IMG],
+                      tags: current[TAGS]
                     ),
                   );
                 },

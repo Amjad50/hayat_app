@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class ArticleData {
@@ -5,14 +6,15 @@ class ArticleData {
       {@required this.title,
       @required this.textColor,
       @required this.img,
-      @required this.articleID,
-      this.tags,
+      @required this.articlePage,
+      @required this.tags,
       @required this.heroTag});
 
   final String title;
   final String textColor;
   final String img;
-  final String articleID;
-  final List<String> tags;
+  final DocumentReference articlePage;
+  // TODO: use tags
+  final List<dynamic> tags;
   final String heroTag;
 }
