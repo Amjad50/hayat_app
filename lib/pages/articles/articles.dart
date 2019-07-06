@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:hayat_app/pages/articles/article_card.dart';
+import 'package:hayat_app/pages/articles/article_data.dart';
 import 'package:hayat_app/pages/articles/article_view_page.dart';
 
 const TITLE = 'title';
@@ -31,31 +32,14 @@ class ArticlesPage extends StatefulWidget {
 const String _ERROR_NO_ARTICLES = "There is no articles at the moment.";
 
 class _ArticlesPageState extends State<ArticlesPage> {
-
-  Widget _buildArticleCardEntry(
-      {@required title, @required textColor, @required img, large = false}) {
-    var _outerCard = ArticleCard(
-      title: title,
-      textColor: textColor,
-      tag: title,
-      img: img,
-      large: large,
-    );
-
-    var _innerCard = ArticleCard.insideArticlePage(
-      title: title,
-      textColor: textColor,
-      tag: title,
-      img: img,
-    );
-
+  Widget _buildArticleCardEntry(ArticleData article, {large = false}) {
     return Container(
       margin: EdgeInsets.all(6),
       child: InkWell(
-        child: _outerCard,
+        child: ArticleCard(article, large: large),
         onTap: () {
           Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-            return ArticleViewPage(_innerCard);
+            return ArticleViewPage(article);
           }));
         },
       ),
@@ -67,7 +51,6 @@ class _ArticlesPageState extends State<ArticlesPage> {
     return StreamBuilder<QuerySnapshot>(
       stream: Firestore.instance.collection(ARTICLES_COLLECTION).snapshots(),
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-
         if (snapshot.hasData) {
           int count = snapshot.data.documents.length;
 
@@ -77,9 +60,13 @@ class _ArticlesPageState extends State<ArticlesPage> {
               SliverFillViewport(
                   delegate: SliverChildListDelegate([
                 _buildArticleCardEntry(
-                  title: first[TITLE],
-                  textColor: first[TEXTCOLOR],
-                  img: first[IMG],
+                  ArticleData(
+                    articleID: "",
+                    title: first[TITLE],
+                    textColor: first[TEXTCOLOR],
+                    img: first[IMG],
+                    heroTag: first.documentID
+                  ),
                   large: true,
                 )
               ])),
@@ -92,9 +79,14 @@ class _ArticlesPageState extends State<ArticlesPage> {
                   var current =
                       _fillNotFoundData(snapshot.data.documents[index + 1]);
                   return _buildArticleCardEntry(
+                    ArticleData(
+                      articleID: "",
+                      heroTag: current.documentID,
                       title: current[TITLE],
                       textColor: current[TEXTCOLOR],
-                      img: current[IMG]);
+                      img: current[IMG],
+                    ),
+                  );
                 },
                 childCount: count - 1,
               ))
@@ -103,7 +95,6 @@ class _ArticlesPageState extends State<ArticlesPage> {
         }
 
         return const Center(child: Text(_ERROR_NO_ARTICLES));
-
       },
     );
   }
