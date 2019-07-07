@@ -30,6 +30,7 @@ class ArticleCard extends StatelessWidget {
           child: MarkdownBody(
             data: this.article.title,
             // TODO: make global styleSheet
+            // TODO: fix bug overflow when transiting to article view
             styleSheet: MarkdownStyleSheet(
               p: TextStyle(
                 color: hexColor(this.article.textColor),

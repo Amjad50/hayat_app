@@ -34,7 +34,12 @@ class ArticleViewPage extends StatelessWidget {
                   if (snapshot.hasData &&
                       snapshot.data.exists &&
                       snapshot.data.data.containsKey(DATAKEY)) {
-                    return MarkdownBody(data: snapshot.data.data[DATAKEY]);
+                    var articleData = snapshot.data.data[DATAKEY];
+                    if (articleData is List<dynamic>) {
+                      String article = articleData.reduce(
+                          (a1, a2) => (a1.toString() + '\n' + a2.toString()).replaceAll('\\n', '\n'));
+                      return MarkdownBody(data: article);
+                    }
                   }
                   return MarkdownBody(data: _ERROR_NO_ARTICLE_PAGE_FOUND);
                 },
