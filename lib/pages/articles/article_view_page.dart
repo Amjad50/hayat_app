@@ -36,8 +36,7 @@ class ArticleViewPage extends StatelessWidget {
                       snapshot.data.data.containsKey(DATAKEY)) {
                     var articleData = snapshot.data.data[DATAKEY];
                     if (articleData is List<dynamic>) {
-                      String article = articleData.reduce(
-                          (a1, a2) => (a1.toString() + '\n' + a2.toString()).replaceAll('\\n', '\n'));
+                      String article = mergeMarkdownArray(articleData);
                       return MarkdownBody(data: article);
                     }
                   }

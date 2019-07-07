@@ -19,3 +19,8 @@ Color hexColor(String s) {
 
   return Color(int.parse(s, radix: 16));
 }
+
+String mergeMarkdownArray(List<dynamic> markdownList) {
+  return markdownList.reduce((a1, a2) =>
+      (a1.toString() + '\n' + a2.toString())).replaceAll('\\n', '\n');
+}

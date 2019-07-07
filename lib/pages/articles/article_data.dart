@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 class ArticleData {
   ArticleData(
       {@required this.title,
+      @required this.mainTitle,
       @required this.textColor,
       @required this.img,
       @required this.articlePage,
@@ -11,6 +12,7 @@ class ArticleData {
       @required this.heroTag});
 
   final String title;
+  final List<dynamic> mainTitle;
   final String textColor;
   final String img;
   final DocumentReference articlePage;

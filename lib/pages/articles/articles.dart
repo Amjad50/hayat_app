@@ -5,6 +5,7 @@ import 'package:hayat_app/pages/articles/article_data.dart';
 import 'package:hayat_app/pages/articles/article_view_page.dart';
 
 const TITLE = 'title';
+const MAINTITLE = 'mainTitle';
 const IMG = 'img';
 const TEXTCOLOR = 'textColor';
 const TAGS = 'tags';
@@ -23,12 +24,17 @@ DocumentSnapshot _fillNotFoundData(DocumentSnapshot snapshot) {
   if (!snapshot.data.containsKey(TEXTCOLOR))
     snapshot.data[TEXTCOLOR] = "#ffffffff";
 
-  if(!snapshot.data.containsKey(PAGEREF))
-    snapshot.data[PAGEREF] = Firestore.instance.collection(ARTICLES_PAGES_COLLECTION).document('default');
+  if (!snapshot.data.containsKey(PAGEREF))
+    snapshot.data[PAGEREF] = Firestore.instance
+        .collection(ARTICLES_PAGES_COLLECTION)
+        .document('default');
 
-  if(!snapshot.data.containsKey(TAGS))
+  if (!snapshot.data.containsKey(TAGS) || !(snapshot.data[TAGS] is List<dynamic>))
     snapshot.data[TAGS] = List<dynamic>();
 
+  if (!snapshot.data.containsKey(MAINTITLE) ||
+      !(snapshot.data[MAINTITLE] is List<dynamic>))
+    snapshot.data[MAINTITLE] = ['**no**\ntitle'];
   return snapshot;
 }
 
@@ -58,7 +64,9 @@ class _ArticlesPageState extends State<ArticlesPage> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-      stream: Firestore.instance.collection(ARTICLES_HEADERS_COLLECTION).snapshots(),
+      stream: Firestore.instance
+          .collection(ARTICLES_HEADERS_COLLECTION)
+          .snapshots(),
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
         if (snapshot.hasData) {
           int count = snapshot.data.documents.length;
@@ -70,13 +78,13 @@ class _ArticlesPageState extends State<ArticlesPage> {
                   delegate: SliverChildListDelegate([
                 _buildArticleCardEntry(
                   ArticleData(
-                    articlePage: first[PAGEREF],
-                    title: first[TITLE],
-                    textColor: first[TEXTCOLOR],
-                    img: first[IMG],
-                    tags: first[TAGS],
-                    heroTag: first.documentID
-                  ),
+                      mainTitle: first[MAINTITLE],
+                      articlePage: first[PAGEREF],
+                      title: first[TITLE],
+                      textColor: first[TEXTCOLOR],
+                      img: first[IMG],
+                      tags: first[TAGS],
+                      heroTag: first.documentID),
                   large: true,
                 )
               ])),
@@ -90,13 +98,13 @@ class _ArticlesPageState extends State<ArticlesPage> {
                       _fillNotFoundData(snapshot.data.documents[index + 1]);
                   return _buildArticleCardEntry(
                     ArticleData(
-                      articlePage: current[PAGEREF],
-                      heroTag: current.documentID,
-                      title: current[TITLE],
-                      textColor: current[TEXTCOLOR],
-                      img: current[IMG],
-                      tags: current[TAGS]
-                    ),
+                        mainTitle: current[MAINTITLE],
+                        articlePage: current[PAGEREF],
+                        heroTag: current.documentID,
+                        title: current[TITLE],
+                        textColor: current[TEXTCOLOR],
+                        img: current[IMG],
+                        tags: current[TAGS]),
                   );
                 },
                 childCount: count - 1,

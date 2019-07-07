@@ -28,7 +28,7 @@ class ArticleCard extends StatelessWidget {
         child: Material(
           color: Colors.transparent,
           child: MarkdownBody(
-            data: this.article.title,
+            data: mergeMarkdownArray(this.article.mainTitle),
             // TODO: make global styleSheet
             // TODO: fix bug overflow when transiting to article view
             styleSheet: MarkdownStyleSheet(
