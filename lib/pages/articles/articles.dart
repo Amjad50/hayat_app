@@ -51,6 +51,21 @@ class ArticlesPage extends StatefulWidget {
 const String _ERROR_NO_ARTICLES = "There is no articles at the moment.";
 
 class _ArticlesPageState extends State<ArticlesPage> {
+
+  PageController _controller;
+
+  @override
+  void initState() { 
+    super.initState();
+    _controller = PageController(initialPage: 0);
+  }
+
+  @override
+  void dispose() { 
+    _controller.dispose();
+    super.dispose();
+  }
+
   Widget _buildArticleCardEntry(ArticleData article, {large = false}) {
     return Container(
       margin: EdgeInsets.all(6),
@@ -142,11 +157,10 @@ class _ArticlesPageState extends State<ArticlesPage> {
           int count = snapshot.data.documents.length;
 
           if (count >= 1) {
-            final controller = PageController(initialPage: 0);
             final children = _buildPageViews(snapshot.data.documents);
 
             return PageView(
-                controller: controller,
+                controller: _controller,
                 scrollDirection: Axis.vertical,
                 children: children);
           }
