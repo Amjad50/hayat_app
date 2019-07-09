@@ -9,7 +9,8 @@ class ArticleData {
       @required this.img,
       @required this.articlePage,
       @required this.tags,
-      @required this.heroTag});
+      @required this.heroTag,
+      @required this.date});
 
   final String title;
   final List<dynamic> mainTitle;
@@ -19,4 +20,5 @@ class ArticleData {
   // TODO: use tags
   final List<dynamic> tags;
   final String heroTag;
+  final Timestamp date;
 }

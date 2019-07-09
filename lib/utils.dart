@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 PreferredSize makeAppBarHeroFix(AppBar _bar) {
@@ -21,6 +22,13 @@ Color hexColor(String s) {
 }
 
 String mergeMarkdownArray(List<dynamic> markdownList) {
-  return markdownList.reduce((a1, a2) =>
-      (a1.toString() + '\n' + a2.toString())).replaceAll('\\n', '\n');
+  return markdownList
+      .reduce((a1, a2) => (a1.toString() + '\n' + a2.toString()))
+      .replaceAll('\\n', '\n');
+}
+
+String parseTimestamp(Timestamp time) {
+  final dateTime = time.toDate();
+
+  return "${dateTime.day}/${dateTime.month}/${dateTime.year}";
 }

@@ -21,6 +21,7 @@ class ArticleCard extends StatelessWidget {
   final double _borderRadius;
   final bool _isInsideArticle;
 
+  // TODO: split build objects
   @override
   Widget build(BuildContext context) {
     return Hero(
@@ -31,34 +32,50 @@ class ArticleCard extends StatelessWidget {
         child: Material(
           color: Colors.transparent,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              MarkdownBody(
-                data: mergeMarkdownArray(this.article.mainTitle),
-                // TODO: make global styleSheet
-                // TODO: fix bug overflow when transiting to article view
-                styleSheet: MarkdownStyleSheet(
-                  p: TextStyle(
-                    color: hexColor(this.article.textColor),
-                    fontSize: this.large ? 40 : 20,
+              Column(
+                children: <Widget>[
+                  MarkdownBody(
+                    data: mergeMarkdownArray(this.article.mainTitle),
+                    // TODO: make global styleSheet
+                    // TODO: fix bug overflow when transiting to article view
+                    styleSheet: MarkdownStyleSheet(
+                      p: TextStyle(
+                        color: hexColor(this.article.textColor),
+                        fontSize: this.large ? 40 : 20,
+                      ),
+                    ),
                   ),
-                ),
+                  this._isInsideArticle
+                      ? Wrap(
+                          children: this
+                              .article
+                              .tags
+                              .map((e) => Padding(
+                                    padding: const EdgeInsets.all(2.0),
+                                    child: ActionChip(
+                                        label: Text(e),
+                                        //TODO: choose color?
+                                        onPressed: () {
+                                          //TODO implement a search based on tag?
+                                        }),
+                                  ))
+                              .toList(),
+                        )
+                      : Container()
+                ],
               ),
-              if (this._isInsideArticle)
-                Wrap(
-                  children: this
-                      .article
-                      .tags
-                      .map((e) => Padding(
-                        padding: const EdgeInsets.all(2.0),
-                        child: ActionChip(
-                            label: Text(e),
-                            //TODO: choose color?
-                            onPressed: () {
-                              //TODO implement a search based on tag?
-                            }),
-                      ))
-                      .toList(),
-                )
+              this._isInsideArticle
+                  ? Container()
+                  : Spacer(
+                      flex: 1,
+                    ),
+              Text(
+                parseTimestamp(this.article.date),
+                style: TextStyle(color: hexColor(this.article.textColor)),
+                textAlign: TextAlign.start,
+              )
             ],
           ),
         ),

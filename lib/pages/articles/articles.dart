@@ -10,6 +10,7 @@ const IMG = 'img';
 const TEXTCOLOR = 'textColor';
 const TAGS = 'tags';
 const PAGEREF = 'page';
+const DATE = 'date';
 
 const ARTICLES_HEADERS_COLLECTION = 'articles_headers';
 const ARTICLES_PAGES_COLLECTION = 'articles_pages';
@@ -36,6 +37,8 @@ DocumentSnapshot _fillNotFoundData(DocumentSnapshot snapshot) {
   if (!snapshot.data.containsKey(MAINTITLE) ||
       !(snapshot.data[MAINTITLE] is List<dynamic>))
     snapshot.data[MAINTITLE] = ['**no**\ntitle'];
+
+  if (!snapshot.data.containsKey(DATE)) snapshot.data[DATE] = Timestamp.now();
   return snapshot;
 }
 
@@ -64,7 +67,7 @@ class _ArticlesPageState extends State<ArticlesPage> {
 
   List<Widget> _buildPageViews(List<DocumentSnapshot> documents) {
     // the best size for Nexus 5X is '6'
-    const _EACH_PAGE_COUNT = 8;
+    const _EACH_PAGE_COUNT = 4;
 
     final list = <Widget>[];
     if (documents.length >= 1) {
@@ -77,11 +80,12 @@ class _ArticlesPageState extends State<ArticlesPage> {
             textColor: first[TEXTCOLOR],
             img: first[IMG],
             tags: first[TAGS],
-            heroTag: first.documentID),
+            heroTag: first.documentID,
+            date: first[DATE]),
         large: true,
       ));
 
-      int _generatePage (int oldIndex, int max) {
+      int _generatePage(int oldIndex, int max) {
         var childList = <Widget>[];
         int i = oldIndex;
         for (; i < max; i++) {
@@ -94,16 +98,23 @@ class _ArticlesPageState extends State<ArticlesPage> {
                 title: current[TITLE],
                 textColor: current[TEXTCOLOR],
                 img: current[IMG],
-                tags: current[TAGS]),
+                tags: current[TAGS],
+                date: current[DATE]),
           ));
         }
-        if(max - oldIndex < _EACH_PAGE_COUNT){
+        if (max - oldIndex < _EACH_PAGE_COUNT) {
           for (int i = max - oldIndex; i < _EACH_PAGE_COUNT; i++) {
             // Padding for the last page
             childList.add(Container());
           }
         }
-        list.add(Column(children: childList.map((e) => Expanded(child: e, flex: 1,)).toList()));
+        list.add(Column(
+            children: childList
+                .map((e) => Expanded(
+                      child: e,
+                      flex: 1,
+                    ))
+                .toList()));
         return i;
       }
 
@@ -135,10 +146,9 @@ class _ArticlesPageState extends State<ArticlesPage> {
             final children = _buildPageViews(snapshot.data.documents);
 
             return PageView(
-              controller: controller,
-              scrollDirection: Axis.vertical,
-              children: children
-            );
+                controller: controller,
+                scrollDirection: Axis.vertical,
+                children: children);
           }
         }
 
