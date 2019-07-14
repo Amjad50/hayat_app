@@ -17,14 +17,17 @@ class ArticleViewPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: makeAppBarHeroFix(AppBar(
-        title: Text(this.article.title),
-      )),
-      body: Container(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            ArticleCard.insideArticlePage(article),
+        body: CustomScrollView(
+      slivers: <Widget>[
+        SliverAppBar(
+            expandedHeight: 225,
+            pinned: true,
+            elevation: 5,
+            flexibleSpace: FlexibleSpaceBar(
+              background: ArticleCard.insideArticlePage(article),
+            )),
+        SliverList(
+          delegate: SliverChildListDelegate([
             Container(
               margin: EdgeInsets.all(10),
               child: StreamBuilder<DocumentSnapshot>(
@@ -44,9 +47,9 @@ class ArticleViewPage extends StatelessWidget {
                 },
               ),
             )
-          ],
-        ),
-      ),
-    );
+          ]),
+        )
+      ],
+    ));
   }
 }

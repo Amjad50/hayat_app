@@ -40,47 +40,56 @@ class _ArticleCardState extends State<ArticleCard> {
       child: Material(
         color: Colors.transparent,
         child: Container(
-          padding: EdgeInsets.symmetric(
-              horizontal: 15, vertical: this.widget.large ? 25 : 15),
+          padding: EdgeInsets.only(
+            left: 15,
+            right: 15,
+            bottom: this.widget.large ? 25 : 15,
+            top: (widget._isInsideArticle
+                ? AppBar().preferredSize.height + 10.0
+                : (widget.large ? 25 : 15)),
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Expanded(
                 child: Column(
                   children: <Widget>[
-                    MarkdownBody(
-                      data: mergeMarkdownArray(this.article.mainTitle),
-                      // TODO: make global styleSheet
-                      // TODO: fix bug overflow when transiting to article view
-                      styleSheet: MarkdownStyleSheet(
-                        p: TextStyle(
+                    Align(
+                      alignment: Alignment.topLeft,
+                      child: Text(
+                        this.article.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
                           color: hexColor(this.article.textColor),
-                          fontSize: this.widget.large ? 40 : 20,
+                          fontSize: this.widget._isInsideArticle
+                              ? 30
+                              : this.widget.large ? 40 : 20,
                         ),
                       ),
                     ),
                     this.widget._isInsideArticle
-                        ? Wrap(
-                            children: this
-                                .article
-                                .tags
-                                .map((e) => Padding(
-                                      padding: const EdgeInsets.all(2.0),
-                                      child: ActionChip(
-                                          label: Text(e),
-                                          //TODO: choose color?
-                                          onPressed: () {
-                                            //TODO implement a search based on tag?
-                                          }),
-                                    ))
-                                .toList(),
+                        ? Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: this
+                                      .article
+                                      .tags
+                                      .map((e) => Padding(
+                                            padding: const EdgeInsets.all(2.0),
+                                            child: ActionChip(
+                                                label: Text(e),
+                                                onPressed: () {
+                                                  //TODO implement a search based on tag?
+                                                }),
+                                          ))
+                                      .toList(),
+                                )),
                           )
                         : Container(),
-                    this.widget._isInsideArticle
-                        ? Container()
-                        : Spacer(
-                            flex: 1,
-                          ),
+                    Spacer(flex: 1),
                     Align(
                       alignment: Alignment.bottomLeft,
                       child: Text(

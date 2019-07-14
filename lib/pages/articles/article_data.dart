@@ -18,7 +18,6 @@ class ArticleData {
   final String textColor;
   final String img;
   final DocumentReference articlePage;
-  // TODO: use tags
   final List<dynamic> tags;
   final String heroTag;
   final Timestamp date;
