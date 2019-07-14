@@ -105,9 +105,7 @@ class _ArticleCardState extends State<ArticleCard> {
               IconButton(
                 icon: Icon(
                   this.article.star ? Icons.star : Icons.star_border,
-                  color: this.article.star
-                      ? Colors.yellow
-                      : hexColor(this.article.textColor),
+                  color: hexColor(this.article.textColor),
                 ),
                 onPressed: () {
                   setState(() => this.article.star = !this.article.star);
@@ -120,7 +118,7 @@ class _ArticleCardState extends State<ArticleCard> {
             image: DecorationImage(
               image: CachedNetworkImageProvider(this.article.img),
               fit: BoxFit.cover,
-            ),
+            )
           ),
         ),
       ),

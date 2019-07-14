@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 PreferredSize makeAppBarHeroFix(AppBar _bar) {
   return PreferredSize(
@@ -29,6 +30,8 @@ String mergeMarkdownArray(List<dynamic> markdownList) {
 
 String parseTimestamp(Timestamp time) {
   final dateTime = time.toDate();
+  final format = dateTime.year != DateTime.now().year ? DateFormat.yMMMd():  DateFormat.MMMd();
 
-  return "${dateTime.day}/${dateTime.month}/${dateTime.year}";
+  return format.format(dateTime).toString();
+  //"${DateTime.august} ${dateTime.day}";
 }
