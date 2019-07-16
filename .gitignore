@@ -73,3 +73,5 @@
 
 # for firebase google config file (not secret)
 google-services.json
+# can be generated from the YAML file
+pubspec.lock
