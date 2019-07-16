@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:hayat_app/auth.dart';
 import 'package:hayat_app/home.dart';
 import 'package:hayat_app/loginsignup.dart';
@@ -25,6 +26,8 @@ class RootPage extends StatefulWidget {
   RootPage({Key key, this.title}) : super(key: key);
 
   final String title;
+  // TODO: group multiple auth handlers into one
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   _RootPageState createState() => _RootPageState();
 }
@@ -53,6 +56,11 @@ class _RootPageState extends State<RootPage> {
     });
   }
 
+  void _signout() {
+    widget._googleSignIn.signOut();
+    _reloadUser();
+  }
+
   Widget _buildLoading() {
     return Container(
       color: Colors.white,
@@ -67,12 +75,12 @@ class _RootPageState extends State<RootPage> {
       case AuthState.AUTHENTICATED:
         return HomePage(
           title: widget.title,
-          signout: _reloadUser,
+          signout: _signout,
           uid: _uid
         );
         break;
       case AuthState.NOT_AUTHENTICATED:
-        return LoginSignupPage(onlogin: _reloadUser);
+        return LoginSignupPage(onlogin: _reloadUser, googleSignIn: widget._googleSignIn,);
         break;
       case AuthState.NOT_DETERMINED:
         return _buildLoading();

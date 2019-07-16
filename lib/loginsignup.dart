@@ -1,12 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 enum _Mode { SIGNIN, SIGNUP }
 
 class LoginSignupPage extends StatefulWidget {
-  LoginSignupPage({Key key, this.onlogin}) : super(key: key);
+  LoginSignupPage({Key key, this.onlogin, this.googleSignIn}) : super(key: key);
 
   final VoidCallback onlogin;
+  final GoogleSignIn googleSignIn;
 
   _LoginSignupPageState createState() => _LoginSignupPageState();
 }
@@ -17,7 +19,34 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
   void _googleAction() {
     // elminiate double auth
     if (_loading) return;
-    // TODO: hangle google auth
+
+    setState(() => _loading = true);
+
+    Future<void> _proceedLogin() async {
+      final GoogleSignInAccount googleSignInAccount =
+          await widget.googleSignIn.signIn();
+
+      if (googleSignInAccount == null) return;
+      final GoogleSignInAuthentication googleSignInAuthentication =
+          await googleSignInAccount.authentication;
+
+      if (googleSignInAuthentication == null) return;
+      final AuthCredential credential = GoogleAuthProvider.getCredential(
+        accessToken: googleSignInAuthentication.accessToken,
+        idToken: googleSignInAuthentication.idToken,
+      );
+
+      final FirebaseUser user =
+          await FirebaseAuth.instance.signInWithCredential(credential);
+
+      assert(!user.isAnonymous);
+      assert(await user.getIdToken() != null);
+    }
+
+    _proceedLogin().then((user) {
+      setState(() => _loading = false);
+      widget.onlogin();
+    });
   }
 
   void _emailAction(_Mode mode) {
