@@ -1,0 +1,5 @@
+enum AuthState {
+  AUTHENTICATED,
+  NOT_AUTHENTICATED,
+  NOT_DETERMINED,
+}

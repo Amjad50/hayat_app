@@ -1,5 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:hayat_app/page.dart';
+import 'package:hayat_app/auth.dart';
+import 'package:hayat_app/home.dart';
+import 'package:hayat_app/loginsignup.dart';
 
 void main() => runApp(MainApp());
 
@@ -13,56 +16,67 @@ class MainApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: HomePage(title: _TITLE),
+      home: RootPage(title: _TITLE),
     );
   }
 }
 
-class HomePage extends StatefulWidget {
-  HomePage({Key key, this.title}) : super(key: key);
+class RootPage extends StatefulWidget {
+  RootPage({Key key, this.title}) : super(key: key);
 
   final String title;
 
-  @override
-  _HomePageState createState() => _HomePageState();
+  _RootPageState createState() => _RootPageState();
 }
 
-class _HomePageState extends State<HomePage> {
-  int _index;
+class _RootPageState extends State<RootPage> {
+  AuthState _state = AuthState.NOT_DETERMINED;
+  String _user_uid = "";
 
   @override
   void initState() {
     super.initState();
-    _index = 0;
+
+    _onlogin();
+  }
+
+  void _onlogin() {
+    FirebaseAuth.instance.currentUser().then((user) {
+      setState(() {
+        if (user != null && user.uid.isNotEmpty) {
+          _state = AuthState.AUTHENTICATED;
+          _user_uid = user.uid;
+        } else {
+          _state = AuthState.NOT_AUTHENTICATED;
+        }
+      });
+    });
+  }
+
+  Widget _buildLoading() {
+    return Container(
+      color: Colors.white,
+      alignment: Alignment.center,
+      child: CircularProgressIndicator(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: Container(
-        child: allPages[_index].widget,
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: allPages
-            .map(
-              (page) => BottomNavigationBarItem(
-                    backgroundColor: page.color,
-                    title: Text(page.label),
-                    icon: Icon(page.icon),
-                  ),
-            )
-            .toList(),
-        currentIndex: _index,
-        type: BottomNavigationBarType.fixed,
-        onTap: (i) {
-          setState(() {
-            _index = i;
-          });
-        },
-      ),
-    );
+    switch (_state) {
+      case AuthState.AUTHENTICATED:
+        return HomePage(
+          title: widget.title,
+        );
+        break;
+      case AuthState.NOT_AUTHENTICATED:
+        return LoginSignupPage(onlogin: _onlogin);
+        break;
+      case AuthState.NOT_DETERMINED:
+        return _buildLoading();
+        break;
+    }
+
+    return _buildLoading();
   }
 }
