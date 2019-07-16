@@ -6,19 +6,19 @@ import 'package:hayat_app/pages/tasks.dart';
 final allPages = <_Page>[
   _Page(
     label: "Articles",
-    widget: ArticlesPage(),
+    widget: ({String uid}) => ArticlesPage(uid: uid),
     color: Colors.redAccent,
     icon: Icons.label_outline,
   ),
   _Page(
     label: "Tasks",
-    widget: TasksPage(),
+    widget: ({String uid}) => TasksPage(uid: uid),
     color: Colors.greenAccent,
     icon: Icons.dashboard,
   ),
   _Page(
     label: "Stastics",
-    widget: StatisticsPage(),
+    widget: ({String uid}) => StatisticsPage(uid: uid),
     color: Colors.amberAccent,
     icon: Icons.language,
   ),
@@ -28,7 +28,7 @@ class _Page {
   _Page({this.label, this.widget, this.color, this.icon});
 
   final String label;
-  final Widget widget;
+  final Widget Function({@required String uid}) widget;
   final Color color;
   final IconData icon;
 }

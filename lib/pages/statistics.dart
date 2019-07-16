@@ -3,7 +3,9 @@
 import 'package:flutter/material.dart';
 
 class StatisticsPage extends StatefulWidget {
-  StatisticsPage({Key key}) : super(key: key);
+  StatisticsPage({Key key, this.uid}) : super(key: key);
+
+  final String uid;
 
   _StatisticsPageState createState() => _StatisticsPageState();
 }

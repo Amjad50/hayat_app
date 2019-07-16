@@ -31,7 +31,7 @@ class RootPage extends StatefulWidget {
 
 class _RootPageState extends State<RootPage> {
   AuthState _state = AuthState.NOT_DETERMINED;
-  String _user_uid = "";
+  String _uid = "";
 
   @override
   void initState() {
@@ -45,7 +45,7 @@ class _RootPageState extends State<RootPage> {
       setState(() {
         if (user != null && user.uid.isNotEmpty) {
           _state = AuthState.AUTHENTICATED;
-          _user_uid = user.uid;
+          _uid = user.uid;
         } else {
           _state = AuthState.NOT_AUTHENTICATED;
         }
@@ -67,7 +67,8 @@ class _RootPageState extends State<RootPage> {
       case AuthState.AUTHENTICATED:
         return HomePage(
           title: widget.title,
-          signout: _reloadUser
+          signout: _reloadUser,
+          uid: _uid
         );
         break;
       case AuthState.NOT_AUTHENTICATED:

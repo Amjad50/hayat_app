@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class ArticlesPage extends StatefulWidget {
-  ArticlesPage({Key key}) : super(key: key);
+  ArticlesPage({Key key, this.uid}) : super(key: key);
+
+  final String uid;
 
   _ArticlesPageState createState() => _ArticlesPageState();
 }

@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:hayat_app/page.dart';
 
 class HomePage extends StatefulWidget {
-  HomePage({Key key, this.title, this.signout}) : super(key: key);
+  HomePage({Key key, this.title, this.signout, this.uid}) : assert(uid != null), super(key: key);
 
   final String title;
   final VoidCallback signout;
+  final String uid;
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -50,7 +51,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: Container(
-        child: allPages[_index].widget,
+        child: allPages[_index].widget(uid: widget.uid),
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: allPages

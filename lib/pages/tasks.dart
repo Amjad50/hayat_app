@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class TasksPage extends StatefulWidget {
-  TasksPage({Key key}) : super(key: key);
+  TasksPage({Key key, this.uid}) : super(key: key);
+
+  final String uid;
 
   _TasksPageState createState() => _TasksPageState();
 }
