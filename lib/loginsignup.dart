@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-enum _Mode { LOGIN, SIGNUP }
+enum _Mode { SIGNIN, SIGNUP }
 
 class LoginSignupPage extends StatefulWidget {
   LoginSignupPage({Key key, this.onlogin}) : super(key: key);
@@ -12,14 +12,7 @@ class LoginSignupPage extends StatefulWidget {
 }
 
 class _LoginSignupPageState extends State<LoginSignupPage> {
-  _Mode _formMode = _Mode.LOGIN;
   bool _loading = false;
-
-  void _switchMode() {
-    setState(() {
-      _formMode = _formMode == _Mode.LOGIN ? _Mode.SIGNUP : _Mode.LOGIN;
-    });
-  }
 
   void _googleAction() {
     // elminiate double auth
@@ -27,11 +20,11 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
     // TODO: hangle google auth
   }
 
-  void _emailAction() {
+  void _emailAction(_Mode mode) {
     // elminiate double auth
     if (_loading) return;
-    switch (_formMode) {
-      case _Mode.LOGIN:
+    switch (mode) {
+      case _Mode.SIGNIN:
         setState(() => _loading = true);
         FirebaseAuth.instance
             .signInWithEmailAndPassword(
@@ -55,28 +48,56 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
       icon: const Icon(
         IconData(71, fontFamily: "Sans"),
       ),
-      label: Text(
-        (_formMode == _Mode.SIGNUP ? "Sign up" : "Login") + " via Google",
-      ),
+      label: const Text("Sign-in via Google"),
       onPressed: _googleAction,
     );
   }
 
-  Widget _buildEmailButton() {
-    return RaisedButton.icon(
-      icon: Icon(Icons.email),
-      label: Text(
-          (_formMode == _Mode.SIGNUP ? "Sign up" : "Login") + " via Email"),
-      onPressed: _emailAction,
-    );
-  }
+  Widget _buildEmailButtons() {
+    const labelColor = const Color.fromARGB(255, 115, 115, 115);
 
-  Widget _buildSwitchButon() {
-    return FlatButton.icon(
-      icon: Icon(Icons.play_arrow),
-      label:
-          Text("Switch to " + (_formMode == _Mode.LOGIN ? "Sign up" : "Login")),
-      onPressed: _switchMode,
+    Padding _buildEmailButton(String label, _Mode mode) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+        child: RaisedButton(
+          child: Text(label),
+          onPressed: () => _emailAction(mode),
+        ),
+      );
+    }
+
+    return Column(
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.only(top: 30.0, bottom: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: const Icon(
+                  Icons.email,
+                  color: labelColor,
+                ),
+              ),
+              const Text(
+                "EMAIL",
+                style: TextStyle(
+                  fontSize: 16,
+                  color: labelColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            _buildEmailButton("Sign-in", _Mode.SIGNIN),
+            _buildEmailButton("Sign-up", _Mode.SIGNUP)
+          ],
+        ),
+      ],
     );
   }
 
@@ -94,20 +115,20 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      alignment: Alignment.center,
-      color: Colors.white,
-      child: Stack(alignment: Alignment.center, children: <Widget>[
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            _buildGoogleButton(),
-            _buildEmailButton(),
-            _buildSwitchButon(),
-          ],
-        ),
-        _buildLoading()
-      ]),
+    return Scaffold(
+      body: Container(
+        alignment: Alignment.center,
+        child: Stack(alignment: Alignment.center, children: <Widget>[
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              _buildGoogleButton(),
+              _buildEmailButtons(),
+            ],
+          ),
+          _buildLoading()
+        ]),
+      ),
     );
   }
 }
