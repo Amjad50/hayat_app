@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hayat_app/pages/articles.dart';
+import 'package:hayat_app/pages/basepage.dart';
 import 'package:hayat_app/pages/statistics.dart';
 import 'package:hayat_app/pages/tasks.dart';
 
@@ -28,7 +29,7 @@ class _Page {
   _Page({this.label, this.widget, this.color, this.icon});
 
   final String label;
-  final Widget Function({@required String uid}) widget;
+  final BasePage Function({@required String uid}) widget;
   final Color color;
   final IconData icon;
 }

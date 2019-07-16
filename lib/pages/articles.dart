@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:hayat_app/pages/basepage.dart';
 
-class ArticlesPage extends StatefulWidget {
-  ArticlesPage({Key key, this.uid}) : super(key: key);
-
-  final String uid;
+class ArticlesPage extends BasePage {
+  ArticlesPage({Key key, String uid}) : super(key: key, uid: uid);
 
   _ArticlesPageState createState() => _ArticlesPageState();
 }

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:hayat_app/pages/basepage.dart';
 
-class TasksPage extends StatefulWidget {
-  TasksPage({Key key, this.uid}) : super(key: key);
-
-  final String uid;
+class TasksPage extends BasePage {
+  TasksPage({Key key, String uid}) : super(key: key, uid: uid);
 
   _TasksPageState createState() => _TasksPageState();
 }
