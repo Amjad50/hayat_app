@@ -63,6 +63,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
           widget.onlogin();
         }).catchError((error) {
           print((error as Exception));
+          setState(() => _loading = false);
         });
         break;
       case _Mode.SIGNUP:
