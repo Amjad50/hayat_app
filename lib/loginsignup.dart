@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 enum _Mode { LOGIN, SIGNUP }
@@ -12,6 +13,7 @@ class LoginSignupPage extends StatefulWidget {
 
 class _LoginSignupPageState extends State<LoginSignupPage> {
   _Mode _formMode = _Mode.LOGIN;
+  bool _loading = false;
 
   void _switchMode() {
     setState(() {
@@ -20,13 +22,26 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
   }
 
   void _googleAction() {
+    // elminiate double auth
+    if (_loading) return;
     // TODO: hangle google auth
   }
 
   void _emailAction() {
-    switch(_formMode) {
+    // elminiate double auth
+    if (_loading) return;
+    switch (_formMode) {
       case _Mode.LOGIN:
-        // TODO: Handle this case.
+        setState(() => _loading = true);
+        FirebaseAuth.instance
+            .signInWithEmailAndPassword(
+                email: "user@test.com", password: "password")
+            .then((user) {
+          setState(() => _loading = false);
+          widget.onlogin();
+        }).catchError((error) {
+          print((error as Exception));
+        });
         break;
       case _Mode.SIGNUP:
         // TODO: Handle this case.
@@ -65,19 +80,34 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
     );
   }
 
+  Widget _buildLoading() {
+    if (_loading)
+      return Container(
+        child: CircularProgressIndicator(),
+        padding: EdgeInsets.symmetric(horizontal: 60, vertical: 30),
+        decoration: BoxDecoration(
+            color: Colors.black45, borderRadius: BorderRadius.circular(5)),
+      );
+    else
+      return Container();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
       alignment: Alignment.center,
       color: Colors.white,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          _buildGoogleButton(),
-          _buildEmailButton(),
-          _buildSwitchButon(),
-        ],
-      ),
+      child: Stack(alignment: Alignment.center, children: <Widget>[
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            _buildGoogleButton(),
+            _buildEmailButton(),
+            _buildSwitchButon(),
+          ],
+        ),
+        _buildLoading()
+      ]),
     );
   }
 }

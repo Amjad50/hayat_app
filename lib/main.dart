@@ -37,10 +37,10 @@ class _RootPageState extends State<RootPage> {
   void initState() {
     super.initState();
 
-    _onlogin();
+    _reloadUser();
   }
 
-  void _onlogin() {
+  void _reloadUser() {
     FirebaseAuth.instance.currentUser().then((user) {
       setState(() {
         if (user != null && user.uid.isNotEmpty) {
@@ -67,10 +67,11 @@ class _RootPageState extends State<RootPage> {
       case AuthState.AUTHENTICATED:
         return HomePage(
           title: widget.title,
+          signout: _reloadUser
         );
         break;
       case AuthState.NOT_AUTHENTICATED:
-        return LoginSignupPage(onlogin: _onlogin);
+        return LoginSignupPage(onlogin: _reloadUser);
         break;
       case AuthState.NOT_DETERMINED:
         return _buildLoading();
