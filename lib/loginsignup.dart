@@ -1,8 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-
-enum _Mode { SIGNIN, SIGNUP }
+import 'package:hayat_app/emailauthdialog.dart';
 
 class LoginSignupPage extends StatefulWidget {
   LoginSignupPage({Key key, this.onlogin, this.googleSignIn}) : super(key: key);
@@ -49,27 +48,24 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
     });
   }
 
-  void _emailAction(_Mode mode) {
+  void _emailAction() {
     // elminiate double auth
     if (_loading) return;
-    switch (mode) {
-      case _Mode.SIGNIN:
-        setState(() => _loading = true);
-        FirebaseAuth.instance
-            .signInWithEmailAndPassword(
-                email: "user@test.com", password: "password")
-            .then((user) {
-          setState(() => _loading = false);
-          widget.onlogin();
-        }).catchError((error) {
-          print((error as Exception));
-          setState(() => _loading = false);
-        });
-        break;
-      case _Mode.SIGNUP:
-        // TODO: Handle this case.
-        break;
-    }
+    setState(() => _loading = true);
+
+    Navigator.of(context)
+        .push<bool>(MaterialPageRoute(
+            fullscreenDialog: true,
+            builder: (context) {
+              return EmailAuthDialog();
+            }))
+        .then((value) {
+      if (value) {
+        widget.onlogin();
+      }
+    }).whenComplete(() {
+      setState(() => _loading = false);
+    });
   }
 
   Widget _buildGoogleButton() {
@@ -86,12 +82,12 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
   Widget _buildEmailButtons() {
     const labelColor = const Color.fromARGB(255, 115, 115, 115);
 
-    Padding _buildEmailButton(String label, _Mode mode) {
+    Padding _buildEmailButton(String label) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12.0),
         child: RaisedButton(
           child: Text(label),
-          onPressed: () => _emailAction(mode),
+          onPressed: () => _emailAction(),
         ),
       );
     }
@@ -123,8 +119,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            _buildEmailButton("Sign-in", _Mode.SIGNIN),
-            _buildEmailButton("Sign-up", _Mode.SIGNUP)
+            _buildEmailButton("Sign-in/Sign-up"),
           ],
         ),
       ],
