@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:hayat_app/pages/articles/article_card.dart';
 import 'package:hayat_app/pages/articles/article_data.dart';
 import 'package:hayat_app/pages/articles/article_view_page.dart';
+import 'package:hayat_app/pages/basepage.dart';
 
 const TITLE = 'title';
 const MAINTITLE = 'mainTitle';
@@ -42,8 +43,8 @@ DocumentSnapshot _fillNotFoundData(DocumentSnapshot snapshot) {
   return snapshot;
 }
 
-class ArticlesPage extends StatefulWidget {
-  ArticlesPage({Key key}) : super(key: key);
+class ArticlesPage extends BasePage {
+  ArticlesPage({Key key, String uid}) : super(key: key, uid: uid);
 
   _ArticlesPageState createState() => _ArticlesPageState();
 }
