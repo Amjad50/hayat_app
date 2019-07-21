@@ -60,7 +60,7 @@ class _LoginSignupPageState extends State<LoginSignupPage> {
               return EmailAuthDialog();
             }))
         .then((value) {
-      if (value) {
+      if (value != null && value) {
         widget.onlogin();
       }
     }).whenComplete(() {
