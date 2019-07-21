@@ -13,11 +13,14 @@ const TAGS = 'tags';
 const PAGEREF = 'page';
 const DATE = 'date';
 
+const FAVS = 'favs';
+
 const ARTICLES_HEADERS_COLLECTION = 'articles_headers';
 const ARTICLES_PAGES_COLLECTION = 'articles_pages';
+const USERS_COLLECTION = 'users';
 
 /// setup the default values in case any of them is not present
-DocumentSnapshot _fillNotFoundData(DocumentSnapshot snapshot) {
+DocumentSnapshot _fillNotFoundArticleData(DocumentSnapshot snapshot) {
   if (!snapshot.data.containsKey(TITLE)) snapshot.data[TITLE] = 'null';
   if (!snapshot.data.containsKey(IMG))
     snapshot.data[IMG] =
@@ -43,6 +46,14 @@ DocumentSnapshot _fillNotFoundData(DocumentSnapshot snapshot) {
   return snapshot;
 }
 
+DocumentSnapshot _fillNotFoundUserData(DocumentSnapshot snapshot) {
+  if (!snapshot.data.containsKey(FAVS) ||
+      !(snapshot.data[FAVS] is List<dynamic>))
+    snapshot.data[FAVS] = List<dynamic>();
+
+  return snapshot;
+}
+
 class ArticlesPage extends BasePage {
   ArticlesPage({Key key, String uid}) : super(key: key, uid: uid);
 
@@ -52,26 +63,32 @@ class ArticlesPage extends BasePage {
 const String _ERROR_NO_ARTICLES = "There is no articles at the moment.";
 
 class _ArticlesPageState extends State<ArticlesPage> {
-
   PageController _controller;
 
   @override
-  void initState() { 
+  void initState() {
     super.initState();
     _controller = PageController(initialPage: 0);
   }
 
   @override
-  void dispose() { 
+  void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
-  Widget _buildArticleCardEntry(ArticleData article, {large = false}) {
+  Widget _buildProgress() {
+    return const Center(child: const CircularProgressIndicator());
+  }
+
+  Widget _buildArticleCardEntry(final ArticleData article, {large = false}) {
     return Container(
       margin: EdgeInsets.all(6),
       child: InkWell(
-        child: ArticleCard(article, large: large),
+        child: ArticleCard(
+          article,
+          large: large,
+        ),
         onTap: () {
           Navigator.of(context).push(MaterialPageRoute(builder: (context) {
             return ArticleViewPage(article);
@@ -81,15 +98,16 @@ class _ArticlesPageState extends State<ArticlesPage> {
     );
   }
 
-  List<Widget> _buildPageViews(List<DocumentSnapshot> documents) {
+  List<Widget> _buildPageViews(
+      List<DocumentSnapshot> documents, List<dynamic> favs) {
     // the best size for Nexus 5X is '6'
     const _EACH_PAGE_COUNT = 4;
 
     final list = <Widget>[];
     if (documents.length >= 1) {
-      var first = _fillNotFoundData(documents[0]);
+      var first = _fillNotFoundArticleData(documents[0]);
       list.add(_buildArticleCardEntry(
-        ArticleData(
+          ArticleData(
             mainTitle: first[MAINTITLE],
             articlePage: first[PAGEREF],
             title: first[TITLE],
@@ -97,25 +115,28 @@ class _ArticlesPageState extends State<ArticlesPage> {
             img: first[IMG],
             tags: first[TAGS],
             heroTag: first.documentID,
-            date: first[DATE]),
-        large: true,
-      ));
+            date: first[DATE],
+            star: favs.contains(first.reference),
+          ),
+          large: true));
 
       int _generatePage(int oldIndex, int max) {
         var childList = <Widget>[];
         int i = oldIndex;
         for (; i < max; i++) {
-          DocumentSnapshot current = _fillNotFoundData(documents[i]);
+          DocumentSnapshot current = _fillNotFoundArticleData(documents[i]);
           childList.add(_buildArticleCardEntry(
             ArticleData(
-                mainTitle: current[MAINTITLE],
-                articlePage: current[PAGEREF],
-                heroTag: current.documentID,
-                title: current[TITLE],
-                textColor: current[TEXTCOLOR],
-                img: current[IMG],
-                tags: current[TAGS],
-                date: current[DATE]),
+              mainTitle: current[MAINTITLE],
+              articlePage: current[PAGEREF],
+              heroTag: current.documentID,
+              title: current[TITLE],
+              textColor: current[TEXTCOLOR],
+              img: current[IMG],
+              tags: current[TAGS],
+              date: current[DATE],
+              star: favs.contains(current.reference),
+            ),
           ));
         }
         if (max - oldIndex < _EACH_PAGE_COUNT) {
@@ -153,21 +174,46 @@ class _ArticlesPageState extends State<ArticlesPage> {
       stream: Firestore.instance
           .collection(ARTICLES_HEADERS_COLLECTION)
           .snapshots(),
-      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-        if (snapshot.hasData) {
-          int count = snapshot.data.documents.length;
+      builder: (BuildContext context,
+          AsyncSnapshot<QuerySnapshot> articles_snapshot) {
+        if (articles_snapshot.hasData) {
+          int count = articles_snapshot.data.documents.length;
 
-          if (count >= 1) {
-            final children = _buildPageViews(snapshot.data.documents);
+          if (count > 0) {
+            return StreamBuilder<DocumentSnapshot>(
+              stream: Firestore.instance
+                  .collection(USERS_COLLECTION)
+                  .document(widget.uid)
+                  .snapshots(),
+              builder: (BuildContext context,
+                  AsyncSnapshot<DocumentSnapshot> userdata_snapshot) {
+                if (userdata_snapshot.hasData) {
+                  DocumentSnapshot userdata =
+                      _fillNotFoundUserData(userdata_snapshot.data);
 
-            return PageView(
-                controller: _controller,
-                scrollDirection: Axis.vertical,
-                children: children);
+                  // TODO: add removing and adding fav to firestore
+
+                  final children = _buildPageViews(
+                      articles_snapshot.data.documents, userdata.data[FAVS]);
+
+                  return PageView(
+                      controller: _controller,
+                      scrollDirection: Axis.vertical,
+                      children: children);
+                }
+                return _buildProgress();
+              },
+            );
           }
+
+          return const Center(
+              child: const Text(
+            _ERROR_NO_ARTICLES,
+            style: TextStyle(color: Colors.red),
+          ));
         }
 
-        return const Center(child: Text(_ERROR_NO_ARTICLES));
+        return _buildProgress();
       },
     );
   }
