@@ -104,11 +104,11 @@ class _ArticleCardState extends State<ArticleCard> {
               ),
               IconButton(
                 icon: Icon(
-                  this.article.star ? Icons.star : Icons.star_border,
+                  this.article.star.value ? Icons.star : Icons.star_border,
                   color: hexColor(this.article.textColor),
                 ),
                 onPressed: () {
-                  setState(() => this.article.star = !this.article.star);
+                  setState(() => this.article.star.value = !this.article.star.value);
                 },
               ),
             ],

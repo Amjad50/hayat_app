@@ -98,46 +98,19 @@ class _ArticlesPageState extends State<ArticlesPage> {
     );
   }
 
-  List<Widget> _buildPageViews(
-      List<DocumentSnapshot> documents, List<dynamic> favs) {
+  List<Widget> _buildPageViews(List<ArticleData> articles, List<dynamic> favs) {
     // the best size for Nexus 5X is '6'
     const _EACH_PAGE_COUNT = 4;
 
     final list = <Widget>[];
-    if (documents.length >= 1) {
-      var first = _fillNotFoundArticleData(documents[0]);
-      list.add(_buildArticleCardEntry(
-          ArticleData(
-            mainTitle: first[MAINTITLE],
-            articlePage: first[PAGEREF],
-            title: first[TITLE],
-            textColor: first[TEXTCOLOR],
-            img: first[IMG],
-            tags: first[TAGS],
-            heroTag: first.documentID,
-            date: first[DATE],
-            star: favs.contains(first.reference),
-          ),
-          large: true));
+    if (articles.length >= 1) {
+      list.add(_buildArticleCardEntry(articles[0], large: true));
 
       int _generatePage(int oldIndex, int max) {
         var childList = <Widget>[];
         int i = oldIndex;
         for (; i < max; i++) {
-          DocumentSnapshot current = _fillNotFoundArticleData(documents[i]);
-          childList.add(_buildArticleCardEntry(
-            ArticleData(
-              mainTitle: current[MAINTITLE],
-              articlePage: current[PAGEREF],
-              heroTag: current.documentID,
-              title: current[TITLE],
-              textColor: current[TEXTCOLOR],
-              img: current[IMG],
-              tags: current[TAGS],
-              date: current[DATE],
-              star: favs.contains(current.reference),
-            ),
-          ));
+          childList.add(_buildArticleCardEntry(articles[i]));
         }
         if (max - oldIndex < _EACH_PAGE_COUNT) {
           for (int i = max - oldIndex; i < _EACH_PAGE_COUNT; i++) {
@@ -156,12 +129,12 @@ class _ArticlesPageState extends State<ArticlesPage> {
       }
 
       var currentI = 1;
-      for (var _ = 0; _ < (documents.length - 1) ~/ _EACH_PAGE_COUNT; _++) {
+      for (var _ = 0; _ < (articles.length - 1) ~/ _EACH_PAGE_COUNT; _++) {
         currentI = _generatePage(currentI, currentI + _EACH_PAGE_COUNT);
       }
 
-      if (currentI < documents.length) {
-        _generatePage(currentI, documents.length);
+      if (currentI < articles.length) {
+        _generatePage(currentI, articles.length);
       }
     }
 
@@ -187,19 +160,69 @@ class _ArticlesPageState extends State<ArticlesPage> {
                   .snapshots(),
               builder: (BuildContext context,
                   AsyncSnapshot<DocumentSnapshot> userdata_snapshot) {
-                if (userdata_snapshot.hasData) {
+                if (userdata_snapshot.hasData &&
+                    userdata_snapshot.data.exists) {
                   DocumentSnapshot userdata =
                       _fillNotFoundUserData(userdata_snapshot.data);
 
-                  // TODO: add removing and adding fav to firestore
+                  // handles changes on star (favorite)
+                  void favChange(DocumentReference reference, bool isFav) {
+                    final newMap = Map<String, dynamic>();
 
-                  final children = _buildPageViews(
-                      articles_snapshot.data.documents, userdata.data[FAVS]);
+                    final newFAVS = List.from(userdata.data[FAVS]);
+
+                    if (isFav) {
+                      if (!newFAVS.contains(reference)) newFAVS.add(reference);
+                    } else {
+                      newFAVS.remove(reference);
+                    }
+
+                    newMap[FAVS] = newFAVS;
+
+                    Firestore.instance
+                        .collection(USERS_COLLECTION)
+                        .document(widget.uid)
+                        .updateData(newMap)
+                        .then((e) => setState(() {}));
+                  }
+
+
+                  final List<ArticleData> articles =
+                      articles_snapshot.data.documents.map(
+                    (e) {
+                      final current = _fillNotFoundArticleData(e);
+                      final article = ArticleData(
+                        mainTitle: current[MAINTITLE],
+                        articlePage: current[PAGEREF],
+                        heroTag: current.documentID,
+                        title: current[TITLE],
+                        textColor: current[TEXTCOLOR],
+                        img: current[IMG],
+                        tags: current[TAGS],
+                        date: current[DATE],
+                        star: userdata.data[FAVS].contains(current.reference),
+                      );
+
+                      article.star.addListener(() =>
+                          favChange(current.reference, article.star.value));
+                      return article;
+                    },
+                  ).toList();
+
+                  final children =
+                      _buildPageViews(articles, userdata.data[FAVS]);
 
                   return PageView(
-                      controller: _controller,
-                      scrollDirection: Axis.vertical,
-                      children: children);
+                    controller: _controller,
+                    scrollDirection: Axis.vertical,
+                    children: children,
+                  );
+                }
+                if (!userdata_snapshot.data.exists) {
+                  Firestore.instance
+                      .collection(USERS_COLLECTION)
+                      .document(widget.uid)
+                      .setData(Map<String, dynamic>());
                 }
                 return _buildProgress();
               },
