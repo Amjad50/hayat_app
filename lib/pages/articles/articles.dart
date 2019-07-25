@@ -160,69 +160,72 @@ class _ArticlesPageState extends State<ArticlesPage> {
                   .snapshots(),
               builder: (BuildContext context,
                   AsyncSnapshot<DocumentSnapshot> userdata_snapshot) {
-                if (userdata_snapshot.hasData &&
-                    userdata_snapshot.data.exists) {
-                  DocumentSnapshot userdata =
-                      _fillNotFoundUserData(userdata_snapshot.data);
+                if (userdata_snapshot.hasData) {
+                  if (userdata_snapshot.data.exists) {
+                    DocumentSnapshot userdata =
+                        _fillNotFoundUserData(userdata_snapshot.data);
 
-                  // handles changes on star (favorite)
-                  void favChange(DocumentReference reference, bool isFav) {
-                    final newMap = Map<String, dynamic>();
+                    // handles changes on star (favorite)
+                    void favChange(DocumentReference reference, bool isFav) {
+                      final newMap = Map<String, dynamic>();
 
-                    final newFAVS = List.from(userdata.data[FAVS]);
+                      final newFAVS = List.from(userdata.data[FAVS]);
 
-                    if (isFav) {
-                      if (!newFAVS.contains(reference)) newFAVS.add(reference);
-                    } else {
-                      newFAVS.remove(reference);
+                      if (isFav) {
+                        if (!newFAVS.contains(reference))
+                          newFAVS.add(reference);
+                      } else {
+                        newFAVS.remove(reference);
+                      }
+
+                      newMap[FAVS] = newFAVS;
+
+                      Firestore.instance
+                          .collection(USERS_COLLECTION)
+                          .document(widget.uid)
+                          .updateData(newMap)
+                          .then((e) => setState(() {}));
                     }
 
-                    newMap[FAVS] = newFAVS;
+                    final List<ArticleData> articles =
+                        articles_snapshot.data.documents.map(
+                      (e) {
+                        final current = _fillNotFoundArticleData(e);
+                        final article = ArticleData(
+                          mainTitle: current[MAINTITLE],
+                          articlePage: current[PAGEREF],
+                          heroTag: current.documentID,
+                          title: current[TITLE],
+                          textColor: current[TEXTCOLOR],
+                          img: current[IMG],
+                          tags: current[TAGS],
+                          date: current[DATE],
+                          star: userdata.data[FAVS].contains(current.reference),
+                        );
 
+                        article.star.addListener(() =>
+                            favChange(current.reference, article.star.value));
+                        return article;
+                      },
+                    ).toList();
+
+                    final children =
+                        _buildPageViews(articles, userdata.data[FAVS]);
+
+                    return PageView(
+                      controller: _controller,
+                      scrollDirection: Axis.vertical,
+                      children: children,
+                    );
+                  } else {
                     Firestore.instance
                         .collection(USERS_COLLECTION)
                         .document(widget.uid)
-                        .updateData(newMap)
-                        .then((e) => setState(() {}));
+                        .setData(Map<String, dynamic>()).then((v) {
+                          setState(() {
+                          });
+                        });
                   }
-
-
-                  final List<ArticleData> articles =
-                      articles_snapshot.data.documents.map(
-                    (e) {
-                      final current = _fillNotFoundArticleData(e);
-                      final article = ArticleData(
-                        mainTitle: current[MAINTITLE],
-                        articlePage: current[PAGEREF],
-                        heroTag: current.documentID,
-                        title: current[TITLE],
-                        textColor: current[TEXTCOLOR],
-                        img: current[IMG],
-                        tags: current[TAGS],
-                        date: current[DATE],
-                        star: userdata.data[FAVS].contains(current.reference),
-                      );
-
-                      article.star.addListener(() =>
-                          favChange(current.reference, article.star.value));
-                      return article;
-                    },
-                  ).toList();
-
-                  final children =
-                      _buildPageViews(articles, userdata.data[FAVS]);
-
-                  return PageView(
-                    controller: _controller,
-                    scrollDirection: Axis.vertical,
-                    children: children,
-                  );
-                }
-                if (!userdata_snapshot.data.exists) {
-                  Firestore.instance
-                      .collection(USERS_COLLECTION)
-                      .document(widget.uid)
-                      .setData(Map<String, dynamic>());
                 }
                 return _buildProgress();
               },
