@@ -180,6 +180,8 @@ class _ArticlesPageState extends State<ArticlesPage> {
 
                       newMap[FAVS] = newFAVS;
 
+                      // TODO: fix problem star does not change if clicked inside an article and then 
+                      // the user went back to the main menu (here).
                       Firestore.instance
                           .collection(USERS_COLLECTION)
                           .document(widget.uid)
