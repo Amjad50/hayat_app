@@ -3,80 +3,80 @@ import 'package:flutter/material.dart';
 import 'package:hayat_app/pages/tasks/new_task_dialog.dart';
 import 'package:hayat_app/pages/tasks/task_data.dart';
 import 'package:hayat_app/pages/tasks/task_view.dart';
+import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
 
 const USERS_COLLECTION = "users";
-const TASKS = "tasks";
 
 class TasksHandler {
-  TasksHandler({this.uid}) : _data = <TaskData>[];
+  TasksHandler({this.uid, @required this.tasksCollection});
 
   final String uid;
-  final List<TaskData> _data;
+  final TasksCollectionTypes tasksCollection;
 
   Future<void> createTask({BuildContext context}) async {
     final result = await showDialog<TaskData>(
-        context: context,
-        builder: (BuildContext context) {
-          return NewTaskDialog();
-        });
+      context: context,
+      builder: (BuildContext context) => NewTaskDialog(),
+    );
 
     if (result != null) {
-      _data.add(result);
+      await Firestore.instance
+          .collection(USERS_COLLECTION)
+          .document(this.uid)
+          .collection(tasksCollectionTypesDBNames[tasksCollection])
+          .add(result.buildMap());
     } else {
       print("cancled");
     }
   }
 
-  Widget buildTasksList() {
+  Widget _buildLoading() {
+    return Center(child: CircularProgressIndicator());
+  }
+
+  Widget _buildListView(List<DocumentSnapshot> documents) {
     return ListView(
-      children: _data.map((e) => TaskView(data: e)).toList(),
+      children: documents.map<TaskView>((e) {
+        final taskData = _fixTask(e.data);
+        return TaskView(
+          data: TaskData(
+              name: taskData[NAME],
+              type: taskData[TYPE],
+              durationH: (taskData[DURATION] as num).toDouble(),
+              done: taskData[DONE]),
+        );
+      }).toList(),
     );
   }
 
-  Future<bool> downloadData() async {
-    final tasksRef = Firestore.instance
-        .collection(USERS_COLLECTION)
-        .document(this.uid)
-        .collection(TASKS);
-
-    final snapshot = await tasksRef.getDocuments();
-
-    _data.addAll(snapshot.documents.map<TaskData>((e) {
-      final taskData = _fixTask(e.data);
-      return TaskData(
-          name: taskData[NAME],
-          type: taskData[TYPE],
-          durationH: (taskData[DURATION] as num).toDouble(),
-          done: taskData[DONE]);
-    }));
-
-    return true;
-  }
-
-  DocumentSnapshot _fixData(DocumentSnapshot snapshot) {
-    if (!snapshot.data.containsKey(TASKS) ||
-        !(snapshot.data[TASKS] is List<dynamic>)) {
-      snapshot.data[TASKS] = List<dynamic>();
-    }
-
-    return snapshot;
+  Widget buildTasksList() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: Firestore.instance
+          .collection(USERS_COLLECTION)
+          .document(this.uid)
+          .collection(tasksCollectionTypesDBNames[tasksCollection])
+          .snapshots(),
+      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+        if (snapshot.hasData) {
+          return _buildListView(snapshot.data.documents);
+        } else {
+          return _buildLoading();
+        }
+      },
+    );
   }
 
   Map<String, dynamic> _fixTask(Map<String, dynamic> data) {
-    if (!data.containsKey(NAME) ||
-        !(data[NAME] is String)) {
+    if (!data.containsKey(NAME) || !(data[NAME] is String)) {
       data[NAME] = "emptyName";
     }
-    if (!data.containsKey(TYPE) ||
-        !(data[TYPE] is String)) {
+    if (!data.containsKey(TYPE) || !(data[TYPE] is String)) {
       data[TYPE] = "emptyType";
     }
-    if (!data.containsKey(DURATION) ||
-        !(data[DURATION] is num)) {
+    if (!data.containsKey(DURATION) || !(data[DURATION] is num)) {
       data[DURATION] = 0.0;
     }
-    if (!data.containsKey(DONE) ||
-        !(data[DONE] is bool)) {
+    if (!data.containsKey(DONE) || !(data[DONE] is bool)) {
       data[DONE] = false;
     }
     return data;
