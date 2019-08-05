@@ -16,7 +16,9 @@ class TasksHandler {
   Future<void> createTask({BuildContext context}) async {
     final result = await showDialog<TaskData>(
       context: context,
-      builder: (BuildContext context) => NewTaskDialog(tasksType: this.tasksType,),
+      builder: (BuildContext context) => NewTaskDialog(
+        tasksType: this.tasksType,
+      ),
     );
 
     if (result != null) {
@@ -35,9 +37,9 @@ class TasksHandler {
   }
 
   Widget _buildListView(List<DocumentSnapshot> documents) {
-    return ListView(
-      children: documents.map<TaskView>((e) {
-        final taskData = _fixTask(e.data);
+    return ListView.builder(
+      itemBuilder: (BuildContext context, int index) {
+        final taskData = _fixTask(documents[index].data);
         return TaskView(
           data: TaskData(
               name: taskData[NAME],
@@ -47,7 +49,8 @@ class TasksHandler {
                   ? null
                   : taskData[DONE]),
         );
-      }).toList(),
+      },
+      itemCount: documents.length,
     );
   }
 
