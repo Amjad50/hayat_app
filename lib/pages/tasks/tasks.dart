@@ -19,7 +19,7 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _taskshandlers = widget.tabs
-        .map((e) => TasksHandler(uid: widget.uid, tasksCollection: e))
+        .map((e) => TasksHandler(uid: widget.uid, tasksType: e))
         .toList();
     _tabsController = TabController(length: widget.tabs.length, vsync: this);
   }

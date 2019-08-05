@@ -8,10 +8,10 @@ import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
 const USERS_COLLECTION = "users";
 
 class TasksHandler {
-  TasksHandler({this.uid, @required this.tasksCollection});
+  TasksHandler({this.uid, @required this.tasksType});
 
   final String uid;
-  final TasksCollectionTypes tasksCollection;
+  final TasksCollectionTypes tasksType;
 
   Future<void> createTask({BuildContext context}) async {
     final result = await showDialog<TaskData>(
@@ -23,7 +23,7 @@ class TasksHandler {
       await Firestore.instance
           .collection(USERS_COLLECTION)
           .document(this.uid)
-          .collection(tasksCollectionTypesDBNames[tasksCollection])
+          .collection(tasksCollectionTypesDBNames[tasksType])
           .add(result.buildMap());
     } else {
       print("cancled");
@@ -43,7 +43,9 @@ class TasksHandler {
               name: taskData[NAME],
               type: taskData[TYPE],
               durationH: (taskData[DURATION] as num).toDouble(),
-              done: taskData[DONE]),
+              done: this.tasksType == TasksCollectionTypes.ROUTINE_TASKS
+                  ? null
+                  : taskData[DONE]),
         );
       }).toList(),
     );
@@ -54,7 +56,7 @@ class TasksHandler {
       stream: Firestore.instance
           .collection(USERS_COLLECTION)
           .document(this.uid)
-          .collection(tasksCollectionTypesDBNames[tasksCollection])
+          .collection(tasksCollectionTypesDBNames[tasksType])
           .snapshots(),
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
         if (snapshot.hasData) {
@@ -76,8 +78,10 @@ class TasksHandler {
     if (!data.containsKey(DURATION) || !(data[DURATION] is num)) {
       data[DURATION] = 0.0;
     }
-    if (!data.containsKey(DONE) || !(data[DONE] is bool)) {
-      data[DONE] = false;
+    if (tasksType == TasksCollectionTypes.TODAYS_TASKS) {
+      if (!data.containsKey(DONE) || !(data[DONE] is bool)) {
+        data[DONE] = false;
+      }
     }
     return data;
   }
