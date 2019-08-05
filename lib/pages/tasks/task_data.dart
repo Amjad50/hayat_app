@@ -11,7 +11,7 @@ class TaskData {
   final String name;
   final String type;
   final double durationH;
-  final bool done;
+  final int done;
 
   final TasksCollectionTypes tasksType;
 

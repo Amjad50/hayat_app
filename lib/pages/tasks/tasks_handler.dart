@@ -16,7 +16,7 @@ class TasksHandler {
   Future<void> createTask({BuildContext context}) async {
     final result = await showDialog<TaskData>(
       context: context,
-      builder: (BuildContext context) => NewTaskDialog(),
+      builder: (BuildContext context) => NewTaskDialog(tasksType: this.tasksType,),
     );
 
     if (result != null) {
@@ -79,8 +79,10 @@ class TasksHandler {
       data[DURATION] = 0.0;
     }
     if (tasksType == TasksCollectionTypes.TODAYS_TASKS) {
-      if (!data.containsKey(DONE) || !(data[DONE] is bool)) {
-        data[DONE] = false;
+      if (data.containsKey(DONE) && (data[DONE] is num)) {
+        data[DONE] = (data[DONE] as num).toInt();
+      } else {
+        data[DONE] = 0;
       }
     }
     return data;
