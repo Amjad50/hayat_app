@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:hayat_app/pages/tasks/task_data.dart';
+import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
 
 class NewTaskDialog extends StatefulWidget {
   NewTaskDialog({Key key, @required this.tasksType}) : super(key: key);
 
-  final tasksType;
+  final TasksCollectionType tasksType;
 
   _NewTaskDialogState createState() => _NewTaskDialogState();
 }

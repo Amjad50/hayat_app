@@ -13,7 +13,7 @@ class TaskData {
   final double durationH;
   final int done;
 
-  final TasksCollectionTypes tasksType;
+  final TasksCollectionType tasksType;
 
   Map<String, dynamic> buildMap() {
     final map = <String, dynamic>{
@@ -22,7 +22,7 @@ class TaskData {
       DURATION: this.durationH
     };
 
-    if (tasksType == TasksCollectionTypes.TODAYS_TASKS) {
+    if (tasksType == TasksCollectionType.TODAYS_TASKS) {
       map[DONE] = this.done;
     }
 

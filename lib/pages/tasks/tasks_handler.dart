@@ -11,7 +11,7 @@ class TasksHandler {
   TasksHandler({this.uid, @required this.tasksType});
 
   final String uid;
-  final TasksCollectionTypes tasksType;
+  final TasksCollectionType tasksType;
 
   Future<void> createTask({BuildContext context}) async {
     final result = await showDialog<TaskData>(
@@ -45,7 +45,7 @@ class TasksHandler {
               name: taskData[NAME],
               type: taskData[TYPE],
               durationH: (taskData[DURATION] as num).toDouble(),
-              done: this.tasksType == TasksCollectionTypes.ROUTINE_TASKS
+              done: this.tasksType == TasksCollectionType.ROUTINE_TASKS
                   ? null
                   : taskData[DONE]),
         );
@@ -81,7 +81,7 @@ class TasksHandler {
     if (!data.containsKey(DURATION) || !(data[DURATION] is num)) {
       data[DURATION] = 0.0;
     }
-    if (tasksType == TasksCollectionTypes.TODAYS_TASKS) {
+    if (tasksType == TasksCollectionType.TODAYS_TASKS) {
       if (data.containsKey(DONE) && (data[DONE] is num)) {
         data[DONE] = (data[DONE] as num).toInt();
       } else {

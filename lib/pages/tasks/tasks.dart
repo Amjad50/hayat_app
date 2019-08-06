@@ -6,7 +6,7 @@ import 'package:hayat_app/pages/tasks/tasks_handler.dart';
 class TasksPage extends BasePage {
   TasksPage({Key key, String uid}) : super(key: key, uid: uid);
 
-  final tabs = TasksCollectionTypes.values;
+  final tabs = TasksCollectionType.values;
 
   _TasksPageState createState() => _TasksPageState();
 }

@@ -1,14 +1,14 @@
-enum TasksCollectionTypes {
+enum TasksCollectionType {
   ROUTINE_TASKS,
   TODAYS_TASKS,
 }
 
-const Map<TasksCollectionTypes, String> tasksCollectionTypesDBNames = {
-  TasksCollectionTypes.ROUTINE_TASKS: "routine_tasks",
-  TasksCollectionTypes.TODAYS_TASKS: "tasks"
+const Map<TasksCollectionType, String> tasksCollectionTypesDBNames = {
+  TasksCollectionType.ROUTINE_TASKS: "routine_tasks",
+  TasksCollectionType.TODAYS_TASKS: "tasks"
 };
 
-const Map<TasksCollectionTypes, String> tasksCollectionTypesViewNames = {
-  TasksCollectionTypes.ROUTINE_TASKS: "Routine Tasks",
-  TasksCollectionTypes.TODAYS_TASKS: "Tasks"
+const Map<TasksCollectionType, String> tasksCollectionTypesViewNames = {
+  TasksCollectionType.ROUTINE_TASKS: "Routine Tasks",
+  TasksCollectionType.TODAYS_TASKS: "Tasks"
 };
