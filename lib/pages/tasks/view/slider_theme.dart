@@ -79,6 +79,13 @@ class MyTrachShape extends SliderTrackShape with BaseSliderTrackShape {
       trackRect.height,
     );
 
+    final Rect rightTrackArcRect = Rect.fromLTWH(
+      trackRect.right - trackRect.height / 2,
+      trackRect.top,
+      trackRect.height,
+      trackRect.height,
+    );
+
     final Rect leftTrackSegment = Rect.fromLTRB(
       trackRect.left,
       trackRect.top,
@@ -93,13 +100,7 @@ class MyTrachShape extends SliderTrackShape with BaseSliderTrackShape {
       trackRect.bottom,
     );
 
-    final Rect rightTrackArcRect = Rect.fromLTWH(
-      trackRect.right - trackRect.height / 2,
-      trackRect.top,
-      trackRect.height,
-      trackRect.height,
-    );
-
+    // draw
     if (!leftTrackArcRect.isEmpty)
       context.canvas.drawArc(leftTrackArcRect, math.pi / 2, math.pi, false,
           leftTrackSegment.isEmpty ? rightTrackPaint : leftTrackPaint);
