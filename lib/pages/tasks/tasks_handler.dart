@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:hayat_app/pages/tasks/new_task_dialog.dart';
 import 'package:hayat_app/pages/tasks/task_data.dart';
-import 'package:hayat_app/pages/tasks/task_view.dart';
+import 'package:hayat_app/pages/tasks/view/task_view.dart';
 import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
 
 const USERS_COLLECTION = "users";

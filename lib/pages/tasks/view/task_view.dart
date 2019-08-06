@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hayat_app/pages/tasks/task_data.dart';
+import 'package:hayat_app/pages/tasks/view/slider_theme.dart';
 
 class TaskView extends StatefulWidget {
   TaskView({Key key, this.data}) : super(key: key);
@@ -41,11 +42,7 @@ class _TaskViewState extends State<TaskView> {
         max: 100,
         divisions: 20,
       ),
-      data: SliderThemeData(
-        thumbShape: RoundSliderThumbShape(enabledThumbRadius: 0),
-        overlayShape: RoundSliderOverlayShape(overlayRadius: 10),
-        tickMarkShape: SliderTickMarkShape.noTickMark
-      ),
+      data: TasksSliderThemeData.get_theme(context),
     );
   }
 
