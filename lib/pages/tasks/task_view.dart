@@ -42,8 +42,10 @@ class _TaskViewState extends State<TaskView> {
         divisions: 20,
       ),
       data: SliderThemeData(
-          thumbShape: RoundSliderThumbShape(enabledThumbRadius: 0),
-          overlayShape: RoundSliderOverlayShape(overlayRadius: 10)),
+        thumbShape: RoundSliderThumbShape(enabledThumbRadius: 0),
+        overlayShape: RoundSliderOverlayShape(overlayRadius: 10),
+        tickMarkShape: SliderTickMarkShape.noTickMark
+      ),
     );
   }
 
