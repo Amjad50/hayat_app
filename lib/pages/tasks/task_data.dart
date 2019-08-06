@@ -6,7 +6,9 @@ const DURATION = "duration";
 const DONE = "done";
 
 class TaskData {
-  TaskData({this.name, this.type, this.durationH, this.done, this.tasksType});
+  TaskData({this.name, this.type, this.durationH, done, this.tasksType})
+      : this.done =
+            tasksType == TasksCollectionType.TODAYS_TASKS ? done : null;
 
   final String name;
   final String type;

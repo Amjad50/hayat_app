@@ -42,12 +42,11 @@ class TasksHandler {
         final taskData = _fixTask(documents[index].data);
         return TaskView(
           data: TaskData(
+              tasksType: tasksType,
               name: taskData[NAME],
               type: taskData[TYPE],
               durationH: (taskData[DURATION] as num).toDouble(),
-              done: this.tasksType == TasksCollectionType.ROUTINE_TASKS
-                  ? null
-                  : taskData[DONE]),
+              done: taskData[DONE]),
         );
       },
       itemCount: documents.length,
