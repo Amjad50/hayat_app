@@ -4,8 +4,10 @@ import 'package:hayat_app/pages/tasks/new_task_dialog.dart';
 import 'package:hayat_app/pages/tasks/task_data.dart';
 import 'package:hayat_app/pages/tasks/view/task_view.dart';
 import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
+import 'package:hayat_app/utils.dart';
 
 const USERS_COLLECTION = "users";
+const TASKS_SUBCOLLECTION = "tasks";
 
 class TasksHandler {
   TasksHandler({this.uid, @required this.tasksType});
@@ -22,11 +24,17 @@ class TasksHandler {
     );
 
     if (result != null) {
-      await Firestore.instance
-          .collection(USERS_COLLECTION)
-          .document(this.uid)
-          .collection(tasksCollectionTypesDBNames[tasksType])
-          .add(result.buildMap());
+      CollectionReference tasksCollectionRef = Firestore.instance
+        .collection(USERS_COLLECTION)
+        .document(this.uid)
+        .collection(tasksCollectionTypesDBNames[tasksType]);
+
+    if (tasksType == TasksCollectionType.TODAYS_TASKS)
+      tasksCollectionRef = tasksCollectionRef
+          .document(getTasksDBDocumentName(DateTime.now())) // TODO: also here, change to an entry from list
+          .collection(TASKS_SUBCOLLECTION);
+
+      await tasksCollectionRef.add(result.buildMap());
     } else {
       print("cancled");
     }
@@ -54,12 +62,18 @@ class TasksHandler {
   }
 
   Widget buildTasksList() {
+    CollectionReference tasksCollectionRef = Firestore.instance
+        .collection(USERS_COLLECTION)
+        .document(this.uid)
+        .collection(tasksCollectionTypesDBNames[tasksType]);
+
+    if (tasksType == TasksCollectionType.TODAYS_TASKS)
+      tasksCollectionRef = tasksCollectionRef
+          .document(getTasksDBDocumentName(DateTime.now())) // use the time of today as default
+          .collection(TASKS_SUBCOLLECTION);                 // TODO: change it to use a list the user to choose from.
+
     return StreamBuilder<QuerySnapshot>(
-      stream: Firestore.instance
-          .collection(USERS_COLLECTION)
-          .document(this.uid)
-          .collection(tasksCollectionTypesDBNames[tasksType])
-          .snapshots(),
+      stream: tasksCollectionRef.snapshots(),
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
         if (snapshot.hasData) {
           return _buildListView(snapshot.data.documents);
