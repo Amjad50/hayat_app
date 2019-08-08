@@ -46,6 +46,17 @@ class _TaskViewState extends State<TaskView> {
     );
   }
 
+  Widget _buildDoneCheckBox() {
+    return Checkbox(
+      value: _donePercent == 100,
+      onChanged: (value) {
+        setState(() {
+          _donePercent = value ? 100 : 0;
+        });
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -116,7 +127,15 @@ class _TaskViewState extends State<TaskView> {
                   ],
                 ),
               ),
-              _buildSlider(),
+              Row(
+                mainAxisSize: MainAxisSize.max,
+                children: <Widget>[
+                  Flexible(
+                    child: _buildSlider(),
+                  ),
+                  _buildDoneCheckBox()
+                ],
+              )
             ],
           ),
         ),
