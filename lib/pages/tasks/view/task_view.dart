@@ -21,7 +21,6 @@ class _TaskViewState extends State<TaskView> {
   }
 
   Widget _buildSlider() {
-    if (_donePercent == null) return Container();
     assert(_donePercent >= 0 && _donePercent <= 100);
     return SliderTheme(
       child: Slider(
@@ -54,6 +53,19 @@ class _TaskViewState extends State<TaskView> {
           _donePercent = value ? 100 : 0;
         });
       },
+    );
+  }
+
+  Widget _buildProgressRow() {
+    if (_donePercent == null) return Container();
+    return Row(
+      mainAxisSize: MainAxisSize.max,
+      children: <Widget>[
+        Flexible(
+          child: _buildSlider(),
+        ),
+        _buildDoneCheckBox()
+      ],
     );
   }
 
@@ -127,15 +139,7 @@ class _TaskViewState extends State<TaskView> {
                   ],
                 ),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.max,
-                children: <Widget>[
-                  Flexible(
-                    child: _buildSlider(),
-                  ),
-                  _buildDoneCheckBox()
-                ],
-              )
+              _buildProgressRow()
             ],
           ),
         ),
