@@ -23,18 +23,27 @@ class TasksHandler {
       ),
     );
 
+    final batch = Firestore.instance.batch();
+
     if (result != null) {
       CollectionReference tasksCollectionRef = Firestore.instance
-        .collection(USERS_COLLECTION)
-        .document(this.uid)
-        .collection(tasksCollectionTypesDBNames[tasksType]);
+          .collection(USERS_COLLECTION)
+          .document(this.uid)
+          .collection(tasksCollectionTypesDBNames[tasksType]);
 
-    if (tasksType == TasksCollectionType.TODAYS_TASKS)
-      tasksCollectionRef = tasksCollectionRef
-          .document(getTasksDBDocumentName(DateTime.now())) // TODO: also here, change to an entry from list
-          .collection(TASKS_SUBCOLLECTION);
+      if (tasksType == TasksCollectionType.TODAYS_TASKS) {
+        final dayDocRef = tasksCollectionRef
+          .document(getTasksDBDocumentName(DateTime.now())); // TODO: also here, change to an entry from list
 
-      await tasksCollectionRef.add(result.buildMap());
+        batch.setData(dayDocRef, {});
+
+        tasksCollectionRef = dayDocRef.collection(TASKS_SUBCOLLECTION);
+      }
+
+      final newTaskDocRef =  tasksCollectionRef.document();
+
+      batch.setData(newTaskDocRef, result.buildMap());
+      await batch.commit();
     } else {
       print("cancled");
     }
