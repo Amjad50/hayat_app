@@ -3,9 +3,10 @@ import 'package:hayat_app/pages/tasks/task_data.dart';
 import 'package:hayat_app/pages/tasks/view/slider_theme.dart';
 
 class TaskView extends StatefulWidget {
-  TaskView({Key key, this.data}) : super(key: key);
+  TaskView({Key key, this.data, this.onDoneChange}) : super(key: key);
 
   final TaskData data;
+  final void Function(int) onDoneChange;
 
   _TaskViewState createState() => _TaskViewState();
 }
@@ -34,7 +35,7 @@ class _TaskViewState extends State<TaskView> {
           setState(() {
             _changing = false;
           });
-          // TODO: update change to firebase
+          widget.onDoneChange(e.toInt());
         },
         value: _donePercent,
         min: 0,
@@ -52,6 +53,7 @@ class _TaskViewState extends State<TaskView> {
         setState(() {
           _donePercent = value ? 100 : 0;
         });
+        widget.onDoneChange(_donePercent.toInt());
       },
     );
   }

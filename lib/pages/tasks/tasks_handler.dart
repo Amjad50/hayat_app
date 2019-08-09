@@ -40,7 +40,7 @@ class TasksHandler {
         tasksCollectionRef = dayDocRef.collection(TASKS_SUBCOLLECTION);
       }
 
-      final newTaskDocRef =  tasksCollectionRef.document();
+      final newTaskDocRef = tasksCollectionRef.document();
 
       batch.setData(newTaskDocRef, result.buildMap());
       await batch.commit();
@@ -59,11 +59,16 @@ class TasksHandler {
         final taskData = _fixTask(documents[index].data);
         return TaskView(
           data: TaskData(
-              tasksType: tasksType,
-              name: taskData[NAME],
-              type: taskData[TYPE],
-              durationH: (taskData[DURATION] as num).toDouble(),
-              done: taskData[DONE]),
+            tasksType: tasksType,
+            name: taskData[NAME],
+            type: taskData[TYPE],
+            durationH: (taskData[DURATION] as num).toDouble(),
+            done: taskData[DONE],
+          ),
+          // TODO: maybe better idea to update the done percentage?
+          onDoneChange: (value) {
+            documents[index].reference.updateData({DONE: value});
+          },
         );
       },
       itemCount: documents.length,
@@ -78,8 +83,10 @@ class TasksHandler {
 
     if (tasksType == TasksCollectionType.TODAYS_TASKS)
       tasksCollectionRef = tasksCollectionRef
-          .document(getTasksDBDocumentName(DateTime.now())) // use the time of today as default
-          .collection(TASKS_SUBCOLLECTION);                 // TODO: change it to use a list the user to choose from.
+          .document(getTasksDBDocumentName(
+              DateTime.now())) // use the time of today as default
+          .collection(
+              TASKS_SUBCOLLECTION); // TODO: change it to use a list the user to choose from.
 
     return StreamBuilder<QuerySnapshot>(
       stream: tasksCollectionRef.snapshots(),
