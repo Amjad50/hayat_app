@@ -21,9 +21,6 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _taskshandlers = widget.tabs
-        .map((e) => TasksHandler(uid: widget.uid, tasksType: e))
-        .toList();
     _tabsController =
         TabController(length: widget.tabs.length, vsync: this, initialIndex: 1);
     _choosenDay = DateTime.now();
@@ -57,7 +54,7 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
               firstDate: now.subtract(const Duration(days: 30)),
               lastDate: now,
             ).then((value) {
-              if(value != null) {
+              if (value != null) {
                 setState(() {
                   _choosenDay = value;
                 });
@@ -108,18 +105,27 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
     );
   }
 
+  FloatingActionButton _buildFAB() {
+    if (_choosenDay.difference(DateTime.now()).inDays != 0) return null;
+    return FloatingActionButton(
+      child: const Icon(Icons.add),
+      onPressed: () {
+        _taskshandlers[_tabsController.index]
+            .createTask(context: context)
+            .then((v) => setState(() {}));
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    _taskshandlers = widget.tabs
+        .map((e) =>
+            TasksHandler(uid: widget.uid, tasksType: e, date: _choosenDay))
+        .toList();
     return Scaffold(
       appBar: _buildTopBar(),
-      floatingActionButton: FloatingActionButton(
-        child: const Icon(Icons.add),
-        onPressed: () {
-          _taskshandlers[_tabsController.index]
-              .createTask(context: context)
-              .then((v) => setState(() {}));
-        },
-      ),
+      floatingActionButton: _buildFAB(),
       body: TabBarView(
         controller: _tabsController,
         children: _taskshandlers

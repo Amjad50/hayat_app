@@ -10,10 +10,11 @@ const USERS_COLLECTION = "users";
 const TASKS_SUBCOLLECTION = "tasks";
 
 class TasksHandler {
-  TasksHandler({this.uid, @required this.tasksType});
+  TasksHandler({this.uid, @required this.tasksType, @required this.date});
 
   final String uid;
   final TasksCollectionType tasksType;
+  final DateTime date;
 
   Future<void> createTask({BuildContext context}) async {
     final result = await showDialog<TaskData>(
@@ -32,8 +33,8 @@ class TasksHandler {
           .collection(tasksCollectionTypesDBNames[tasksType]);
 
       if (tasksType == TasksCollectionType.TODAYS_TASKS) {
-        final dayDocRef = tasksCollectionRef
-          .document(getTasksDBDocumentName(DateTime.now())); // TODO: also here, change to an entry from list
+        final dayDocRef =
+            tasksCollectionRef.document(getTasksDBDocumentName(this.date));
 
         batch.setData(dayDocRef, {});
 
@@ -83,10 +84,8 @@ class TasksHandler {
 
     if (tasksType == TasksCollectionType.TODAYS_TASKS)
       tasksCollectionRef = tasksCollectionRef
-          .document(getTasksDBDocumentName(
-              DateTime.now())) // use the time of today as default
-          .collection(
-              TASKS_SUBCOLLECTION); // TODO: change it to use a list the user to choose from.
+          .document(getTasksDBDocumentName(this.date))
+          .collection(TASKS_SUBCOLLECTION);
 
     return StreamBuilder<QuerySnapshot>(
       stream: tasksCollectionRef.snapshots(),
