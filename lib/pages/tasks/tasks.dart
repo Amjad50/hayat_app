@@ -23,6 +23,7 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
     super.initState();
     _tabsController =
         TabController(length: widget.tabs.length, vsync: this, initialIndex: 1);
+    _tabsController.addListener(() => setState(() {})); // seems a bit slow
     _choosenDay = DateTime.now();
   }
 
@@ -106,7 +107,8 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
   }
 
   FloatingActionButton _buildFAB() {
-    if (_choosenDay.difference(DateTime.now()).inDays != 0) return null;
+    if (_choosenDay.difference(DateTime.now()).inDays != 0 &&
+        _tabsController.index != 0) return null;
     return FloatingActionButton(
       child: const Icon(Icons.add),
       onPressed: () {
