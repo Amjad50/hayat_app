@@ -32,8 +32,7 @@ String getDayDisplayString(DateTime date) {
 
   // future
   if (diff.isNegative) return "Error";
-  print(date);
-  print(diff.inDays);
+  
   switch (diff.inDays) {
     case 0:
       return "Today";
