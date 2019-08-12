@@ -3,9 +3,12 @@ import 'package:hayat_app/pages/tasks/task_data.dart';
 import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
 
 class NewTaskDialog extends StatefulWidget {
-  NewTaskDialog({Key key, @required this.tasksType}) : super(key: key);
+  NewTaskDialog({Key key, @required this.tasksType, @required this.userTypes})
+      : assert(userTypes != null && userTypes.isNotEmpty),
+        super(key: key);
 
   final TasksCollectionType tasksType;
+  final List<String> userTypes;
 
   _NewTaskDialogState createState() => _NewTaskDialogState();
 }
@@ -17,7 +20,7 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
   String _type;
   double _durationH;
 
-  static const _white = const  TextStyle(color: Colors.white);
+  static const _white = const TextStyle(color: Colors.white);
 
   bool _validateAndSave() {
     final form = _formKey.currentState;
@@ -60,15 +63,24 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
   }
 
   Widget _buildTypeInput() {
-    return TextFormField(
-      keyboardType: TextInputType.text,
-      maxLines: 1,
+    return DropdownButtonFormField<String>(
       decoration: InputDecoration(
         labelText: "Type",
       ),
-      onSaved: (value) => _type = value,
+      items: widget.userTypes.map(
+        (e) {
+          return DropdownMenuItem<String>(
+            value: e,
+            child: Text(e),
+          );
+        },
+      ).toList(),
+      value: _type,
+      onChanged: (value) {
+        setState(() => _type = value);
+      },
       validator: (value) {
-        if (value.isEmpty) {
+        if (value == null || value.isEmpty) {
           return "Type cannot be empty";
         }
         return null;

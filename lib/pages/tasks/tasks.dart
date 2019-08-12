@@ -114,8 +114,8 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
   }
 
   FloatingActionButton _buildFAB() {
-    if (_choosenDay.difference(DateTime.now()).inDays != 0 &&
-        _tabsController.index != 0) return null;
+    if (_taskshandlers[_tabsController.index].isLoading || (_choosenDay.difference(DateTime.now()).inDays != 0 &&
+        _tabsController.index != 0)) return null;
     return FloatingActionButton(
       child: const Icon(Icons.add),
       onPressed: () {

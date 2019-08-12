@@ -31,15 +31,18 @@ class TasksHandler {
 
     _types = data[USER_TASKS_TYPES];
 
+    if(_types.isEmpty)
+      _types.add("ERROR: Empty Types List"); // TODO: use default list in the user dataset
+
     isLoading = false;
   }
 
   Future<void> createTask(BuildContext context, DateTime date) async {
-    // TODO: use _types here.
     final result = await showDialog<TaskData>(
       context: context,
       builder: (BuildContext context) => NewTaskDialog(
         tasksType: this.tasksType,
+        userTypes: _types
       ),
     );
 
