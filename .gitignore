@@ -78,3 +78,6 @@ pubspec.lock
 
 # store images and samples for ideas in designing
 inspiration/
+
+# auto gen by flutter IOS
+flutter_export_environment.sh
