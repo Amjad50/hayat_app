@@ -19,7 +19,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _index = 0;
+    _index = 1;
   }
 
   PopupMenuButton _buildAppbarMenu() {
