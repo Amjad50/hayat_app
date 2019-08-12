@@ -1,3 +1,5 @@
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -49,4 +51,44 @@ String getDayDisplayString(DateTime date) {
 /// return a widget which display a loading circle
 Widget buildLoadingWidget() {
   return const Center(child: const CircularProgressIndicator());
+}
+
+/// return an appbar that works with heros
+/// the issue was during a hero animation, the hero animated 
+/// widget will get on top of the appbar,
+/// when wrapping the appbar with a hero, the issue is fixed as the
+/// appbar on top now.
+PreferredSize makeAppBarHeroFix(AppBar _bar) {
+  return PreferredSize(
+    child: Hero(
+      child: _bar,
+      tag: AppBar,
+    ),
+    preferredSize: AppBar().preferredSize,
+  );
+}
+
+/// convert the String #AARRGGBB or #RRGGBB to a Color object
+Color hexColor(String s) {
+  s = s.toUpperCase().replaceAll("#", "");
+  if (s.length > 8)
+    s = s.substring(0, 8);
+  else
+    s = "F" * (8 - s.length) + s;
+
+  return Color(int.parse(s, radix: 16));
+}
+
+/// As the article page is stored as an array of lines in firestore
+/// this function returns the whole String article
+String mergeMarkdownArray(List<dynamic> markdownList) {
+  return markdownList
+      .reduce((a1, a2) => (a1.toString() + '\n' + a2.toString()))
+      .replaceAll('\\n', '\n');
+}
+
+/// same as dateToString, covert a timestamp instead of dateTime
+String parseTimestamp(Timestamp time) {
+  final dateTime = time.toDate();
+  return dateToString(dateTime);
 }
