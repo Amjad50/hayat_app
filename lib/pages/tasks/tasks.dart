@@ -23,8 +23,15 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
     super.initState();
     _tabsController =
         TabController(length: widget.tabs.length, vsync: this, initialIndex: 1);
-    _tabsController.addListener(() => setState(() {})); // seems a bit slow
+    _tabsController.addListener(() {
+      if(!_tabsController.indexIsChanging)
+        setState(() {});
+    });
     _choosenDay = DateTime.now();
+    _taskshandlers = widget.tabs
+        .map((e) =>
+            TasksHandler(uid: widget.uid, tasksType: e))
+        .toList();
   }
 
   @override
@@ -113,7 +120,7 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
       child: const Icon(Icons.add),
       onPressed: () {
         _taskshandlers[_tabsController.index]
-            .createTask(context: context)
+            .createTask(context, _choosenDay)
             .then((v) => setState(() {}));
       },
     );
@@ -121,10 +128,6 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    _taskshandlers = widget.tabs
-        .map((e) =>
-            TasksHandler(uid: widget.uid, tasksType: e, date: _choosenDay))
-        .toList();
     return Scaffold(
       appBar: _buildTopBar(),
       floatingActionButton: _buildFAB(),
@@ -132,7 +135,7 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
         controller: _tabsController,
         children: _taskshandlers
             .map(
-              (e) => e.buildTasksList(),
+              (e) => e.buildTasksList(_choosenDay),
             )
             .toList(),
       ),

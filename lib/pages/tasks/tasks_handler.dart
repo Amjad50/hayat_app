@@ -10,13 +10,12 @@ const USERS_COLLECTION = "users";
 const TASKS_SUBCOLLECTION = "tasks";
 
 class TasksHandler {
-  TasksHandler({this.uid, @required this.tasksType, @required this.date});
+  TasksHandler({this.uid, @required this.tasksType});
 
   final String uid;
   final TasksCollectionType tasksType;
-  final DateTime date;
 
-  Future<void> createTask({BuildContext context}) async {
+  Future<void> createTask(BuildContext context, DateTime date) async {
     final result = await showDialog<TaskData>(
       context: context,
       builder: (BuildContext context) => NewTaskDialog(
@@ -34,7 +33,7 @@ class TasksHandler {
 
       if (tasksType == TasksCollectionType.TODAYS_TASKS) {
         final dayDocRef =
-            tasksCollectionRef.document(getTasksDBDocumentName(this.date));
+            tasksCollectionRef.document(getTasksDBDocumentName(date));
 
         batch.setData(dayDocRef, {});
 
@@ -76,7 +75,7 @@ class TasksHandler {
     );
   }
 
-  Widget buildTasksList() {
+  Widget buildTasksList(DateTime date) {
     CollectionReference tasksCollectionRef = Firestore.instance
         .collection(USERS_COLLECTION)
         .document(this.uid)
@@ -84,7 +83,7 @@ class TasksHandler {
 
     if (tasksType == TasksCollectionType.TODAYS_TASKS)
       tasksCollectionRef = tasksCollectionRef
-          .document(getTasksDBDocumentName(this.date))
+          .document(getTasksDBDocumentName(date))
           .collection(TASKS_SUBCOLLECTION);
 
     return StreamBuilder<QuerySnapshot>(
