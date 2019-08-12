@@ -116,14 +116,14 @@ class _TaskViewState extends State<TaskView> {
                     ),
                     Spacer(),
                     Material(
-                      color: Colors.green, // TODO: change color
+                      color: Theme.of(context).colorScheme.background,
                       borderRadius: BorderRadius.circular(2),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: Row(
                           children: <Widget>[
                             Icon(
-                              Icons.timer, // TODO: use diff icon
+                              Icons.query_builder, // icon of a clock.
                               size: Theme.of(context).textTheme.body1.fontSize,
                             ),
                             Container(
