@@ -19,6 +19,7 @@ String getTasksDBDocumentName(DateTime date) {
   return "${fixedSizeInt(date.year, 4)}${fixedSizeInt(date.month, 2)}${fixedSizeInt(date.day, 2)}";
 }
 
+/// return the standard date format in this app from a date.
 String dateToString(DateTime date, [DateTime now]) {
   if (now == null) now = DateTime.now();
 
@@ -27,6 +28,7 @@ String dateToString(DateTime date, [DateTime now]) {
   return DateFormat("${year}MMMEd").format(date);
 }
 
+/// return a String representation of a date relevant to today.
 String getDayDisplayString(DateTime date) {
   final now = DateTime.now();
   final diff = now.difference(date);
@@ -44,6 +46,7 @@ String getDayDisplayString(DateTime date) {
   }
 }
 
+/// return a widget which display a loading circle
 Widget buildLoadingWidget() {
   return const Center(child: const CircularProgressIndicator());
 }
