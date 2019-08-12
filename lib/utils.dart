@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 /// return the int in a String with a fixed size
@@ -20,7 +21,7 @@ String getTasksDBDocumentName(DateTime date) {
 
 String dateToString(DateTime date, [DateTime now]) {
   if (now == null) now = DateTime.now();
-  
+
   final year = date.year == now.year ? "" : "y";
 
   return DateFormat("${year}MMMEd").format(date);
@@ -32,7 +33,7 @@ String getDayDisplayString(DateTime date) {
 
   // future
   if (diff.isNegative) return "Error";
-  
+
   switch (diff.inDays) {
     case 0:
       return "Today";
@@ -41,4 +42,8 @@ String getDayDisplayString(DateTime date) {
     default:
       return dateToString(date);
   }
+}
+
+Widget buildLoadingWidget() {
+  return const Center(child: const CircularProgressIndicator());
 }

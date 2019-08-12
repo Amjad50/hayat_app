@@ -24,14 +24,14 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
     _tabsController =
         TabController(length: widget.tabs.length, vsync: this, initialIndex: 1);
     _tabsController.addListener(() {
-      if(!_tabsController.indexIsChanging)
-        setState(() {});
+      if (!_tabsController.indexIsChanging) setState(() {});
     });
     _choosenDay = DateTime.now();
     _taskshandlers = widget.tabs
-        .map((e) =>
-            TasksHandler(uid: widget.uid, tasksType: e))
+        .map((e) => TasksHandler(uid: widget.uid, tasksType: e))
         .toList();
+    _taskshandlers
+        .forEach((e) => e.initUserTypes().then((_) => setState(() {})));
   }
 
   @override
@@ -135,7 +135,7 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
         controller: _tabsController,
         children: _taskshandlers
             .map(
-              (e) => e.buildTasksList(_choosenDay),
+              (e) => e.isLoading ? buildLoadingWidget() :e.buildTasksList(_choosenDay),
             )
             .toList(),
       ),

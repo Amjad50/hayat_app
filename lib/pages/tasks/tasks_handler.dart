@@ -7,6 +7,7 @@ import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
 import 'package:hayat_app/utils.dart';
 
 const USERS_COLLECTION = "users";
+const USER_TASKS_TYPES = "tasks_types";
 const TASKS_SUBCOLLECTION = "tasks";
 
 class TasksHandler {
@@ -15,7 +16,26 @@ class TasksHandler {
   final String uid;
   final TasksCollectionType tasksType;
 
+  bool isLoading;
+
+  List<String> _types;
+
+  Future<void> initUserTypes() async {
+    isLoading = true;
+    final snapshot = await Firestore.instance
+        .collection(USERS_COLLECTION)
+        .document(this.uid)
+        .get();
+
+    final data = _fixUser(snapshot.data);
+
+    _types = data[USER_TASKS_TYPES];
+
+    isLoading = false;
+  }
+
   Future<void> createTask(BuildContext context, DateTime date) async {
+    // TODO: use _types here.
     final result = await showDialog<TaskData>(
       context: context,
       builder: (BuildContext context) => NewTaskDialog(
@@ -47,10 +67,6 @@ class TasksHandler {
     } else {
       print("cancled");
     }
-  }
-
-  Widget _buildLoading() {
-    return Center(child: CircularProgressIndicator());
   }
 
   Widget _buildListView(List<DocumentSnapshot> documents) {
@@ -92,29 +108,46 @@ class TasksHandler {
         if (snapshot.hasData) {
           return _buildListView(snapshot.data.documents);
         } else {
-          return _buildLoading();
+          return buildLoadingWidget();
         }
       },
     );
   }
 
   Map<String, dynamic> _fixTask(Map<String, dynamic> data) {
-    if (!data.containsKey(NAME) || !(data[NAME] is String)) {
-      data[NAME] = "emptyName";
+    Map<String, dynamic> newData = data;
+    if (!newData.containsKey(NAME) || !(newData[NAME] is String)) {
+      newData[NAME] = "emptyName";
     }
-    if (!data.containsKey(TYPE) || !(data[TYPE] is String)) {
-      data[TYPE] = "emptyType";
+    if (!newData.containsKey(TYPE) || !(newData[TYPE] is String)) {
+      newData[TYPE] = "emptyType";
     }
-    if (!data.containsKey(DURATION) || !(data[DURATION] is num)) {
-      data[DURATION] = 0.0;
+    if (!newData.containsKey(DURATION) || !(newData[DURATION] is num)) {
+      newData[DURATION] = 0.0;
     }
     if (tasksType == TasksCollectionType.TODAYS_TASKS) {
-      if (data.containsKey(DONE) && (data[DONE] is num)) {
-        data[DONE] = (data[DONE] as num).toInt();
+      if (newData.containsKey(DONE) && (newData[DONE] is num)) {
+        newData[DONE] = (newData[DONE] as num).toInt();
       } else {
-        data[DONE] = 0;
+        newData[DONE] = 0;
       }
     }
-    return data;
+    return newData;
+  }
+
+  Map<String, dynamic> _fixUser(Map<String, dynamic> data) {
+    Map<String, dynamic> newData = data;
+
+    print(newData);
+
+    if (newData.containsKey(USER_TASKS_TYPES) &&
+        (newData[USER_TASKS_TYPES] is List<dynamic>))
+      newData[USER_TASKS_TYPES] = (newData[USER_TASKS_TYPES] as List<dynamic>)
+          .map((e) => e.toString())
+          .toList();
+    else
+      newData[USER_TASKS_TYPES] = <String>[];
+
+    return newData;
   }
 }
