@@ -123,7 +123,7 @@ class _TaskViewState extends State<TaskView> {
                         child: Row(
                           children: <Widget>[
                             Icon(
-                              Icons.query_builder, // icon of a clock.
+                              Icons.schedule, // icon of a clock.
                               size: Theme.of(context).textTheme.body1.fontSize,
                             ),
                             Container(
