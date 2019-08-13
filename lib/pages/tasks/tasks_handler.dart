@@ -141,8 +141,6 @@ class TasksHandler {
   Map<String, dynamic> _fixUser(Map<String, dynamic> data) {
     Map<String, dynamic> newData = data;
 
-    print(newData);
-
     if (newData.containsKey(USER_TASKS_TYPES) &&
         (newData[USER_TASKS_TYPES] is List<dynamic>))
       newData[USER_TASKS_TYPES] = (newData[USER_TASKS_TYPES] as List<dynamic>)
