@@ -18,6 +18,8 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
 
   DateTime _choosenDay;
 
+  bool _populateLoading = false;
+
   @override
   void initState() {
     super.initState();
@@ -90,6 +92,34 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
     );
   }
 
+  Widget _buildPopulateRoutines(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          const Text("Populate your routine tasks?"),
+          RaisedButton(
+            child: Text("YES"),
+            onPressed: () async {
+              setState(() {
+                _populateLoading = true;
+              });
+              final todayHandler = _taskshandlers[
+                  widget.tabs.indexOf(TasksCollectionType.TODAYS_TASKS)];
+              final routineHandler = _taskshandlers[
+                  widget.tabs.indexOf(TasksCollectionType.ROUTINE_TASKS)];
+
+              await todayHandler.addTasks(await routineHandler.getTasks(_choosenDay), _choosenDay);
+              setState(() {
+                _populateLoading = false;
+              });
+            },
+          )
+        ],
+      ),
+    );
+  }
+
   Widget _buildTopBar() {
     final tabsBar = _buildTabsBar();
     final daysChooseBar = _buildDaysChoosedBar();
@@ -114,8 +144,9 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
   }
 
   FloatingActionButton _buildFAB() {
-    if (_taskshandlers[_tabsController.index].isLoading || (_choosenDay.difference(DateTime.now()).inDays != 0 &&
-        _tabsController.index != 0)) return null;
+    if (_taskshandlers[_tabsController.index].isLoading ||
+        (_choosenDay.difference(DateTime.now()).inDays != 0 &&
+            _tabsController.index != 0)) return null;
     return FloatingActionButton(
       child: const Icon(Icons.add),
       onPressed: () {
@@ -133,11 +164,19 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
       floatingActionButton: _buildFAB(),
       body: TabBarView(
         controller: _tabsController,
-        children: _taskshandlers
-            .map(
-              (e) => e.isLoading ? buildLoadingWidget() :e.buildTasksList(_choosenDay),
-            )
-            .toList(),
+        children: _taskshandlers.map(
+          (e) {
+            return Builder(
+              builder: (context) {
+                if (e.isLoading ||
+                    (_populateLoading && _tabsController.index == 1))
+                  return buildLoadingWidget();
+                else
+                  return e.buildTasksList(_choosenDay, _buildPopulateRoutines);
+              },
+            );
+          },
+        ).toList(),
       ),
     );
   }

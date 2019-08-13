@@ -31,8 +31,9 @@ class TasksHandler {
 
     _types = data[USER_TASKS_TYPES];
 
-    if(_types.isEmpty)
-      _types.add("ERROR: Empty Types List"); // TODO: use default list in the user dataset
+    if (_types.isEmpty)
+      _types.add(
+          "ERROR: Empty Types List"); // TODO: use default list in the user dataset
 
     isLoading = false;
   }
@@ -40,10 +41,8 @@ class TasksHandler {
   Future<void> createTask(BuildContext context, DateTime date) async {
     final result = await showDialog<TaskData>(
       context: context,
-      builder: (BuildContext context) => NewTaskDialog(
-        tasksType: this.tasksType,
-        userTypes: _types
-      ),
+      builder: (BuildContext context) =>
+          NewTaskDialog(tasksType: this.tasksType, userTypes: _types),
     );
 
     final batch = Firestore.instance.batch();
@@ -94,7 +93,7 @@ class TasksHandler {
     );
   }
 
-  Widget buildTasksList(DateTime date) {
+  Widget buildTasksList(DateTime date, WidgetBuilder zeroWidget) {
     CollectionReference tasksCollectionRef = Firestore.instance
         .collection(USERS_COLLECTION)
         .document(this.uid)
@@ -109,7 +108,10 @@ class TasksHandler {
       stream: tasksCollectionRef.snapshots(),
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
         if (snapshot.hasData) {
-          return _buildListView(snapshot.data.documents);
+          if (snapshot.data.documents.length > 0)
+            return _buildListView(snapshot.data.documents);
+          else
+            return zeroWidget(context);
         } else {
           return buildLoadingWidget();
         }
@@ -150,5 +152,57 @@ class TasksHandler {
       newData[USER_TASKS_TYPES] = <String>[];
 
     return newData;
+  }
+
+  Future<void> addTasks(List<TaskData> tasks, DateTime date) async {
+    final batch = Firestore.instance.batch();
+
+    CollectionReference tasksCollectionRef = Firestore.instance
+        .collection(USERS_COLLECTION)
+        .document(this.uid)
+        .collection(tasksCollectionTypesDBNames[tasksType]);
+
+    if (tasksType == TasksCollectionType.TODAYS_TASKS) {
+      final dayDocRef =
+          tasksCollectionRef.document(getTasksDBDocumentName(date));
+
+      batch.setData(dayDocRef, {});
+
+      tasksCollectionRef = dayDocRef.collection(TASKS_SUBCOLLECTION);
+    }
+
+    tasks.forEach((e) {
+      final newTaskDocRef = tasksCollectionRef.document();
+      batch.setData(newTaskDocRef, e.buildMap());
+    });
+
+    await batch.commit();
+  }
+
+  Future<List<TaskData>> getTasks(DateTime date) async {
+    CollectionReference tasksCollectionRef = Firestore.instance
+        .collection(USERS_COLLECTION)
+        .document(this.uid)
+        .collection(tasksCollectionTypesDBNames[tasksType]);
+
+    if (tasksType == TasksCollectionType.TODAYS_TASKS)
+      tasksCollectionRef = tasksCollectionRef
+          .document(getTasksDBDocumentName(date))
+          .collection(TASKS_SUBCOLLECTION);
+
+    final docs = await tasksCollectionRef.getDocuments();
+
+    final tasks = docs.documents.map((e) {
+      final taskData = _fixTask(e.data);
+      return TaskData(
+        tasksType: tasksType,
+        name: taskData[NAME],
+        type: taskData[TYPE],
+        durationH: (taskData[DURATION] as num).toDouble(),
+        done: taskData[DONE] ?? 0,
+      );
+    }).toList();
+
+    return tasks;
   }
 }
