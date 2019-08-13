@@ -45,27 +45,15 @@ class TasksHandler {
           NewTaskDialog(tasksType: this.tasksType, userTypes: _types),
     );
 
-    final batch = Firestore.instance.batch();
+    // final batch = Firestore.instance.batch();
 
     if (result != null) {
-      CollectionReference tasksCollectionRef = Firestore.instance
-          .collection(USERS_COLLECTION)
-          .document(this.uid)
-          .collection(tasksCollectionTypesDBNames[tasksType]);
-
-      if (tasksType == TasksCollectionType.TODAYS_TASKS) {
-        final dayDocRef =
-            tasksCollectionRef.document(getTasksDBDocumentName(date));
-
-        batch.setData(dayDocRef, {});
-
-        tasksCollectionRef = dayDocRef.collection(TASKS_SUBCOLLECTION);
-      }
-
-      final newTaskDocRef = tasksCollectionRef.document();
-
-      batch.setData(newTaskDocRef, result.buildMap());
-      await batch.commit();
+      await _writeToDB(date, (transaction, tasksCollectionRef) async {
+        print("hi");
+        final newTaskDocRef = tasksCollectionRef.document();
+        print(result.buildMap());
+        await transaction.set(newTaskDocRef, result.buildMap());
+      });
     } else {
       print("cancled");
     }
@@ -154,29 +142,41 @@ class TasksHandler {
     return newData;
   }
 
-  Future<void> addTasks(List<TaskData> tasks, DateTime date) async {
-    final batch = Firestore.instance.batch();
-
+  Future<void> _writeToDB(
+      DateTime date,
+      Future<dynamic> Function(Transaction, CollectionReference)
+          handler) async {
     CollectionReference tasksCollectionRef = Firestore.instance
         .collection(USERS_COLLECTION)
         .document(this.uid)
         .collection(tasksCollectionTypesDBNames[tasksType]);
 
-    if (tasksType == TasksCollectionType.TODAYS_TASKS) {
-      final dayDocRef =
-          tasksCollectionRef.document(getTasksDBDocumentName(date));
+    await Firestore.instance.runTransaction((transaction) async {
+      if (tasksType == TasksCollectionType.TODAYS_TASKS) {
+        final dayDocRef =
+            tasksCollectionRef.document(getTasksDBDocumentName(date));
 
-      batch.setData(dayDocRef, {});
+        final doc = await transaction.get(dayDocRef);
 
-      tasksCollectionRef = dayDocRef.collection(TASKS_SUBCOLLECTION);
-    }
+        if (!doc.exists)
+          await transaction.set(dayDocRef, {});
+        else
+          await transaction.update(dayDocRef, {});
 
-    tasks.forEach((e) {
-      final newTaskDocRef = tasksCollectionRef.document();
-      batch.setData(newTaskDocRef, e.buildMap());
+        tasksCollectionRef = dayDocRef.collection(TASKS_SUBCOLLECTION);
+      }
+
+      await handler(transaction, tasksCollectionRef);
     });
+  }
 
-    await batch.commit();
+  Future<void> addTasks(List<TaskData> tasks, DateTime date) async {
+    _writeToDB(date, (transaction, tasksCollectionRef) async {
+      tasks.forEach((e) async {
+        final newTaskDocRef = tasksCollectionRef.document();
+        await transaction.set(newTaskDocRef, e.buildMap());
+      });
+    });
   }
 
   Future<List<TaskData>> getTasks(DateTime date) async {
