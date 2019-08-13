@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:hayat_app/auth.dart';
-import 'package:hayat_app/home.dart';
-import 'package:hayat_app/loginsignup.dart';
+import 'package:hayat_app/auth/auth_state.dart';
+import 'package:hayat_app/pages/home.dart';
+import 'package:hayat_app/auth/loginsignup.dart';
 
 void main() => runApp(MainApp());
 

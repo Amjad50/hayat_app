@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:hayat_app/page.dart';
+import 'package:hayat_app/pages/page.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key key, this.title, this.signout, this.uid}) : assert(uid != null), super(key: key);
