@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:hayat_app/pages/tasks/new_task_dialog.dart';
 import 'package:hayat_app/pages/tasks/task_data.dart';
-import 'package:hayat_app/pages/tasks/view/task_view.dart';
+import 'package:hayat_app/pages/tasks/view/task_list_view.dart';
 import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
 import 'package:hayat_app/utils.dart';
 
@@ -45,8 +45,6 @@ class TasksHandler {
           NewTaskDialog(tasksType: this.tasksType, userTypes: _types),
     );
 
-    // final batch = Firestore.instance.batch();
-
     if (result != null) {
       await _writeToDB(date, (transaction, tasksCollectionRef) async {
         print("hi");
@@ -60,24 +58,15 @@ class TasksHandler {
   }
 
   Widget _buildListView(List<DocumentSnapshot> documents) {
-    return ListView.builder(
-      itemBuilder: (BuildContext context, int index) {
-        final taskData = _fixTask(documents[index].data);
-        return TaskView(
-          data: TaskData(
-            tasksType: tasksType,
-            name: taskData[NAME],
-            type: taskData[TYPE],
-            durationH: (taskData[DURATION] as num).toDouble(),
-            done: taskData[DONE],
-          ),
-          // TODO: maybe better idea to update the done percentage?
-          onDoneChange: (value) {
-            documents[index].reference.updateData({DONE: value});
-          },
+    return TasksListView(
+      tasks: documents.map<TaskData>((e) {
+        final taskData = _fixTask(e.data);
+        return TaskData.fromMap(
+          taskData,
+          tasksType: tasksType,
+          reference: e.reference,
         );
-      },
-      itemCount: documents.length,
+      }).toList(),
     );
   }
 
