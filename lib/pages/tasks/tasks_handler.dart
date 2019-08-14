@@ -18,7 +18,7 @@ class TasksHandler {
 
   bool isLoading;
 
-  List<String> _types;
+  List<String> _userTypes;
 
   Future<void> initUserTypes() async {
     isLoading = true;
@@ -29,10 +29,10 @@ class TasksHandler {
 
     final data = _fixUser(snapshot.data);
 
-    _types = data[USER_TASKS_TYPES];
+    _userTypes = data[USER_TASKS_TYPES];
 
-    if (_types.isEmpty)
-      _types.add(
+    if (_userTypes.isEmpty)
+      _userTypes.add(
           "ERROR: Empty Types List"); // TODO: use default list in the user dataset
 
     isLoading = false;
@@ -42,14 +42,12 @@ class TasksHandler {
     final result = await showDialog<TaskData>(
       context: context,
       builder: (BuildContext context) =>
-          NewTaskDialog(tasksType: this.tasksType, userTypes: _types),
+          NewTaskDialog(tasksType: this.tasksType, userTypes: _userTypes),
     );
 
     if (result != null) {
       await _writeToDB(date, (transaction, tasksCollectionRef) async {
-        print("hi");
         final newTaskDocRef = tasksCollectionRef.document();
-        print(result.buildMap());
         await transaction.set(newTaskDocRef, result.buildMap());
       });
     } else {
@@ -63,6 +61,7 @@ class TasksHandler {
         final taskData = _fixTask(e.data);
         return TaskData.fromMap(
           taskData,
+          _userTypes,
           tasksType: tasksType,
           reference: e.reference,
         );
@@ -101,9 +100,11 @@ class TasksHandler {
     if (!newData.containsKey(NAME) || !(newData[NAME] is String)) {
       newData[NAME] = "emptyName";
     }
-    if (!newData.containsKey(TYPE) || !(newData[TYPE] is String)) {
-      newData[TYPE] = "emptyType";
-    }
+    if (newData.containsKey(TYPE) && (newData[TYPE] is num)) {
+        newData[TYPE] = (newData[TYPE] as num).toInt();
+      } else {
+        newData[TYPE] = -1;
+      }
     if (!newData.containsKey(DURATION) || !(newData[DURATION] is num)) {
       newData[DURATION] = 0.0;
     }
@@ -186,7 +187,7 @@ class TasksHandler {
       return TaskData(
         tasksType: tasksType,
         name: taskData[NAME],
-        type: taskData[TYPE],
+        typeIndex: taskData[TYPE],
         durationH: (taskData[DURATION] as num).toDouble(),
         done: taskData[DONE] ?? 0,
       );

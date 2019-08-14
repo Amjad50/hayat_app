@@ -117,7 +117,7 @@ class _TaskViewState extends State<TaskView> {
                 child: Row(
                   children: <Widget>[
                     Text(
-                      widget.data.type,
+                      widget.data.typeString,
                       style: Theme.of(context).textTheme.body1.copyWith(
                             color: Theme.of(context).textTheme.caption.color,
                           ),
