@@ -1,5 +1,7 @@
+import 'package:charts_flutter/flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:hayat_app/pages/basepage.dart';
+import 'package:hayat_app/pages/statistics/score.dart';
 import 'package:hayat_app/pages/statistics/statistics_handler.dart';
 import 'package:hayat_app/utils.dart';
 
@@ -10,14 +12,15 @@ class StatisticsPage extends BasePage {
 }
 
 class _StatisticsPageState extends State<StatisticsPage> {
-  _StatisticsPageState() : statisticsHandler = StatisticsHandler();
+  _StatisticsPageState();
 
-  final StatisticsHandler statisticsHandler;
+  StatisticsHandler statisticsHandler;
 
   @override
   void initState() {
     super.initState();
-    statisticsHandler.init();
+    statisticsHandler = StatisticsHandler(uid: widget.uid);
+    statisticsHandler.init().then((_) => setState(() {}));
   }
 
   Widget _card(Widget widget, [String titleString]) {
@@ -43,30 +46,51 @@ class _StatisticsPageState extends State<StatisticsPage> {
   }
 
   Widget _buildDaysGraph() {
-    return _card(Text("ADD CHART"));
+    return _card(
+      LineChart(
+        <Series<Score, num>>[
+          Series<Score, num>(
+              id: "Days",
+              data: statisticsHandler.daysScores,
+              measureFn: (score, index) => score.score,
+              domainFn: (score, index) => index),
+        ],
+      ),
+    );
   }
 
   Widget _buildMonthGraph() {
-    return _card(Text("ADD CHART"));
+    return _card(
+      LineChart(
+        <Series<Score, num>>[
+          Series<Score, num>(
+            id: "Days",
+            data: statisticsHandler.monthsScores,
+            measureFn: (score, index) => score.score,
+            domainFn: (score, index) => index,
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildBestMonth() {
     return _card(
       Text(
-        "${statisticsHandler.topMonth}",
+        "${statisticsHandler.topMonth.score}",
         style: Theme.of(context).textTheme.display2,
       ),
-      "TOP MONTH",
+      "TOP MONTH = ${statisticsHandler.topMonth.dateString}",
     );
   }
 
   Widget _buildBestDay() {
     return _card(
       Text(
-        "${statisticsHandler.topDay}",
+        "${statisticsHandler.topDay.score}",
         style: Theme.of(context).textTheme.display2,
       ),
-      "TOP DAY",
+      "TOP DAY = ${statisticsHandler.topDay.dateString}",
     );
   }
 

@@ -19,13 +19,20 @@ String getTasksDBDocumentName(DateTime date) {
   return "${fixedSizeInt(date.year, 4)}${fixedSizeInt(date.month, 2)}${fixedSizeInt(date.day, 2)}";
 }
 
+/// return the DateTime object back from a String format
+DateTime getDateFromDBDocumentName(String name) {
+  if (name.length != 4 + 2 + 2) return null;
+  return DateTime.tryParse(name);
+}
+
 /// return the standard date format in this app from a date.
-String dateToString(DateTime date, [DateTime now]) {
+String dateToString(DateTime date, [DateTime now, bool noDay = false]) {
   if (now == null) now = DateTime.now();
 
   final year = date.year == now.year ? "" : "y";
+  final day = noDay ? "" : "Ed";
 
-  return DateFormat("${year}MMMEd").format(date);
+  return DateFormat("${year}MMM${day}").format(date);
 }
 
 /// return a String representation of a date relevant to today.
