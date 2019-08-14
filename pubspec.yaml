@@ -39,8 +39,11 @@ dependencies:
   # for google sign in support
   google_sign_in: ^4.0.4
 
-  #datetime
+  # datetime
   intl: ^0.15.8
+
+  # drawing graphs
+  charts_flutter: ^0.6.0
 
 
 dev_dependencies:
