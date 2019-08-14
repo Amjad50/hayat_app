@@ -17,7 +17,7 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
   final _formKey = new GlobalKey<FormState>();
 
   String _name;
-  String _type;
+  int _typeIndex;
   double _durationH;
 
   static const _white = const TextStyle(color: Colors.white);
@@ -35,7 +35,8 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
     if (_validateAndSave()) {
       final task = TaskData(
         name: _name,
-        type: _type,
+        typeIndex: _typeIndex,
+        typeString: widget.userTypes[_typeIndex],
         durationH: _durationH,
         tasksType: widget.tasksType,
         done: 0,
@@ -63,24 +64,26 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
   }
 
   Widget _buildTypeInput() {
-    return DropdownButtonFormField<String>(
+    final items = List<DropdownMenuItem<int>>(widget.userTypes.length);
+
+    for (int i = 0; i < widget.userTypes.length; i++) {
+      items[i] = DropdownMenuItem<int>(
+        value: i,
+        child: Text(widget.userTypes[i]),
+      );
+    }
+
+    return DropdownButtonFormField<int>(
       decoration: InputDecoration(
         labelText: "Type",
       ),
-      items: widget.userTypes.map(
-        (e) {
-          return DropdownMenuItem<String>(
-            value: e,
-            child: Text(e),
-          );
-        },
-      ).toList(),
-      value: _type,
+      items: items,
+      value: _typeIndex,
       onChanged: (value) {
-        setState(() => _type = value);
+        setState(() => _typeIndex = value);
       },
       validator: (value) {
-        if (value == null || value.isEmpty) {
+        if (value == null || value == -1) {
           return "Type cannot be empty";
         }
         return null;

@@ -20,25 +20,31 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
 
   bool _populateLoading = false;
 
+  // to avoid error of updating the widget, after dispose
+  void Function(void Function()) _updateWidget;
+
   @override
   void initState() {
     super.initState();
+    _updateWidget = setState;
     _tabsController =
         TabController(length: widget.tabs.length, vsync: this, initialIndex: 1);
     _tabsController.addListener(() {
-      if (!_tabsController.indexIsChanging) setState(() {});
+      if (!_tabsController.indexIsChanging) _updateWidget(() {});
     });
     _choosenDay = DateTime.now();
     _taskshandlers = widget.tabs
         .map((e) => TasksHandler(uid: widget.uid, tasksType: e))
         .toList();
     _taskshandlers
-        .forEach((e) => e.initUserTypes().then((_) => setState(() {})));
+        .forEach((e) => e.initUserTypes().then((_) => _updateWidget(() {})));
   }
 
   @override
   void dispose() {
     _tabsController.dispose();
+    _taskshandlers.clear();
+    _updateWidget = (_) {};
     super.dispose();
   }
 
@@ -65,7 +71,7 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
               lastDate: now,
             ).then((value) {
               if (value != null) {
-                setState(() {
+                _updateWidget(() {
                   _choosenDay = value;
                 });
               }
@@ -101,7 +107,7 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
           RaisedButton(
             child: Text("YES"),
             onPressed: () async {
-              setState(() {
+              _updateWidget(() {
                 _populateLoading = true;
               });
               final todayHandler = _taskshandlers[
@@ -110,7 +116,7 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
                   widget.tabs.indexOf(TasksCollectionType.ROUTINE_TASKS)];
 
               await todayHandler.addTasks(await routineHandler.getTasks(_choosenDay), _choosenDay);
-              setState(() {
+              _updateWidget(() {
                 _populateLoading = false;
               });
             },
@@ -152,7 +158,7 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
       onPressed: () {
         _taskshandlers[_tabsController.index]
             .createTask(context, _choosenDay)
-            .then((v) => setState(() {}));
+            .then((v) => _updateWidget(() {}));
       },
     );
   }
