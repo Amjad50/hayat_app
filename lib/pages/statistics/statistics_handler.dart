@@ -11,14 +11,22 @@ class StatisticsHandler {
   StatisticsHandler({@required this.uid});
 
   final String uid;
-  bool isLoading = false;
+  bool _isLoading = false;
   bool _doneInit = false;
+  bool _isError = false;
+
+  String _message = "";
 
   List<Score> _daysScores = [];
   List<Score> _monthsScores = [];
 
-  List<Score> get daysScores => _daysScores;
-  List<Score> get monthsScores => _monthsScores;
+  List<Score> get daysScores => _doneInit ? _daysScores : [];
+  List<Score> get monthsScores => _doneInit ? _monthsScores : [];
+
+  String get message => _message;
+
+  bool get isLoading => _isLoading;
+  bool get isError => _isError;
 
   Score get topDay {
     if (!_doneInit || _daysScores.isEmpty) return Score.none;
@@ -30,8 +38,14 @@ class StatisticsHandler {
     return _monthsScores.reduce((a, b) => a.max(b));
   }
 
-  Future<void> init() async {
-    isLoading = true;
+  Future<void> init(void Function() onChange) async {
+    _isLoading = true;
+
+    Firestore.instance.settings(persistenceEnabled: true);
+
+    if (_doneInit) return;
+    _message = "processing main documents info";
+    onChange();
 
     final documents = await Firestore.instance
         .collection(USERS_COLLECTION)
@@ -40,13 +54,25 @@ class StatisticsHandler {
         .getDocuments();
 
     for (final child in documents.documents) {
+      if (_doneInit) return;
+      _message = "processing ${child.documentID}";
+      onChange();
       await _processAndAddDocumentEntry(child);
     }
 
+    if (_doneInit) return;
     _computeMonths();
 
-    isLoading = false;
+    _isLoading = false;
     _doneInit = true;
+  }
+
+  void timedout() {
+    _isLoading = false;
+    _doneInit = true;
+    _isError = true;
+    _message =
+        "Connection Timed out!\nMight be because there is no internet connection.";
   }
 
   void _computeMonths() {

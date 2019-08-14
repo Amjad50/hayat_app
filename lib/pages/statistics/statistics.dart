@@ -14,13 +14,28 @@ class StatisticsPage extends BasePage {
 class _StatisticsPageState extends State<StatisticsPage> {
   _StatisticsPageState();
 
+  static const DEFAULT_TIMEOUT_DURATION = Duration(seconds: 30);
+
   StatisticsHandler statisticsHandler;
+
+  // to avoid error of updating the widget, after dispose
+  void Function(void Function()) _updateWidget;
 
   @override
   void initState() {
     super.initState();
+    _updateWidget = setState;
     statisticsHandler = StatisticsHandler(uid: widget.uid);
-    statisticsHandler.init().then((_) => setState(() {}));
+    statisticsHandler
+        .init(() => _updateWidget(() {}))
+        .timeout(DEFAULT_TIMEOUT_DURATION, onTimeout: statisticsHandler.timedout)
+        .then((_) => _updateWidget(() {}));
+  }
+
+  @override
+  void dispose() {
+    _updateWidget = (_) {};
+    super.dispose();
   }
 
   Widget _card(Widget widget, [String titleString]) {
@@ -124,7 +139,20 @@ class _StatisticsPageState extends State<StatisticsPage> {
   @override
   Widget build(BuildContext context) {
     if (statisticsHandler.isLoading)
-      return buildLoadingWidget();
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            buildLoadingWidget(),
+            Padding(
+              padding: EdgeInsets.only(top: 16),
+            ),
+            Text("${statisticsHandler.message}"),
+          ],
+        ),
+      );
+    else if (statisticsHandler.isError)
+      return Center(child: Text(statisticsHandler.message, textAlign: TextAlign.center,));
     else
       return _buildMainView();
   }

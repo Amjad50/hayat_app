@@ -1,4 +1,5 @@
 import 'package:hayat_app/utils.dart';
+import 'package:intl/intl.dart';
 
 class Score {
   static Score none = Score(DateTime.fromMillisecondsSinceEpoch(0), 0);
@@ -23,9 +24,9 @@ class Score {
 
   String get dateString {
     if (_isMonth)
-      return dateToString(_date, DateTime.now(), true);
+      return DateFormat.yMMMM().format(date);
     else
-      return dateToString(_date);
+      return dateToString(date);
   }
 
   Score max(Score other) {
