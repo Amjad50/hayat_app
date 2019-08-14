@@ -18,25 +18,33 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
 
   DateTime _choosenDay;
 
+  bool _populateLoading = false;
+
+  // to avoid error of updating the widget, after dispose
+  void Function(void Function()) _updateWidget;
+
   @override
   void initState() {
     super.initState();
+    _updateWidget = setState;
     _tabsController =
         TabController(length: widget.tabs.length, vsync: this, initialIndex: 1);
     _tabsController.addListener(() {
-      if (!_tabsController.indexIsChanging) setState(() {});
+      if (!_tabsController.indexIsChanging) _updateWidget(() {});
     });
     _choosenDay = DateTime.now();
     _taskshandlers = widget.tabs
         .map((e) => TasksHandler(uid: widget.uid, tasksType: e))
         .toList();
     _taskshandlers
-        .forEach((e) => e.initUserTypes().then((_) => setState(() {})));
+        .forEach((e) => e.initUserTypes().then((_) => _updateWidget(() {})));
   }
 
   @override
   void dispose() {
     _tabsController.dispose();
+    _taskshandlers.clear();
+    _updateWidget = (_) {};
     super.dispose();
   }
 
@@ -63,7 +71,7 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
               lastDate: now,
             ).then((value) {
               if (value != null) {
-                setState(() {
+                _updateWidget(() {
                   _choosenDay = value;
                 });
               }
@@ -87,6 +95,34 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
         ),
       ),
       preferredSize: Size.fromHeight(50), // way larger than used (== infinite)
+    );
+  }
+
+  Widget _buildPopulateRoutines(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          const Text("Populate your routine tasks?"),
+          RaisedButton(
+            child: Text("YES"),
+            onPressed: () async {
+              _updateWidget(() {
+                _populateLoading = true;
+              });
+              final todayHandler = _taskshandlers[
+                  widget.tabs.indexOf(TasksCollectionType.TODAYS_TASKS)];
+              final routineHandler = _taskshandlers[
+                  widget.tabs.indexOf(TasksCollectionType.ROUTINE_TASKS)];
+
+              await todayHandler.addTasks(await routineHandler.getTasks(_choosenDay), _choosenDay);
+              _updateWidget(() {
+                _populateLoading = false;
+              });
+            },
+          )
+        ],
+      ),
     );
   }
 
@@ -114,14 +150,15 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
   }
 
   FloatingActionButton _buildFAB() {
-    if (_taskshandlers[_tabsController.index].isLoading || (_choosenDay.difference(DateTime.now()).inDays != 0 &&
-        _tabsController.index != 0)) return null;
+    if (_taskshandlers[_tabsController.index].isLoading ||
+        (_choosenDay.difference(DateTime.now()).inDays != 0 &&
+            _tabsController.index != 0)) return null;
     return FloatingActionButton(
       child: const Icon(Icons.add),
       onPressed: () {
         _taskshandlers[_tabsController.index]
             .createTask(context, _choosenDay)
-            .then((v) => setState(() {}));
+            .then((v) => _updateWidget(() {}));
       },
     );
   }
@@ -133,11 +170,19 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
       floatingActionButton: _buildFAB(),
       body: TabBarView(
         controller: _tabsController,
-        children: _taskshandlers
-            .map(
-              (e) => e.isLoading ? buildLoadingWidget() :e.buildTasksList(_choosenDay),
-            )
-            .toList(),
+        children: _taskshandlers.map(
+          (e) {
+            return Builder(
+              builder: (context) {
+                if (e.isLoading ||
+                    (_populateLoading && _tabsController.index == 1))
+                  return buildLoadingWidget();
+                else
+                  return e.buildTasksList(_choosenDay, _buildPopulateRoutines);
+              },
+            );
+          },
+        ).toList(),
       ),
     );
   }

@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:hayat_app/pages/tasks/new_task_dialog.dart';
 import 'package:hayat_app/pages/tasks/task_data.dart';
-import 'package:hayat_app/pages/tasks/view/task_view.dart';
+import 'package:hayat_app/pages/tasks/view/task_list_view.dart';
 import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
 import 'package:hayat_app/utils.dart';
 
@@ -18,7 +18,7 @@ class TasksHandler {
 
   bool isLoading;
 
-  List<String> _types;
+  List<String> _userTypes;
 
   Future<void> initUserTypes() async {
     isLoading = true;
@@ -29,10 +29,11 @@ class TasksHandler {
 
     final data = _fixUser(snapshot.data);
 
-    _types = data[USER_TASKS_TYPES];
+    _userTypes = data[USER_TASKS_TYPES];
 
-    if(_types.isEmpty)
-      _types.add("ERROR: Empty Types List"); // TODO: use default list in the user dataset
+    if (_userTypes.isEmpty)
+      _userTypes.add(
+          "ERROR: Empty Types List"); // TODO: use default list in the user dataset
 
     isLoading = false;
   }
@@ -40,61 +41,35 @@ class TasksHandler {
   Future<void> createTask(BuildContext context, DateTime date) async {
     final result = await showDialog<TaskData>(
       context: context,
-      builder: (BuildContext context) => NewTaskDialog(
-        tasksType: this.tasksType,
-        userTypes: _types
-      ),
+      builder: (BuildContext context) =>
+          NewTaskDialog(tasksType: this.tasksType, userTypes: _userTypes),
     );
 
-    final batch = Firestore.instance.batch();
-
     if (result != null) {
-      CollectionReference tasksCollectionRef = Firestore.instance
-          .collection(USERS_COLLECTION)
-          .document(this.uid)
-          .collection(tasksCollectionTypesDBNames[tasksType]);
-
-      if (tasksType == TasksCollectionType.TODAYS_TASKS) {
-        final dayDocRef =
-            tasksCollectionRef.document(getTasksDBDocumentName(date));
-
-        batch.setData(dayDocRef, {});
-
-        tasksCollectionRef = dayDocRef.collection(TASKS_SUBCOLLECTION);
-      }
-
-      final newTaskDocRef = tasksCollectionRef.document();
-
-      batch.setData(newTaskDocRef, result.buildMap());
-      await batch.commit();
+      await _writeToDB(date, (transaction, tasksCollectionRef) async {
+        final newTaskDocRef = tasksCollectionRef.document();
+        await transaction.set(newTaskDocRef, result.buildMap());
+      });
     } else {
       print("cancled");
     }
   }
 
   Widget _buildListView(List<DocumentSnapshot> documents) {
-    return ListView.builder(
-      itemBuilder: (BuildContext context, int index) {
-        final taskData = _fixTask(documents[index].data);
-        return TaskView(
-          data: TaskData(
-            tasksType: tasksType,
-            name: taskData[NAME],
-            type: taskData[TYPE],
-            durationH: (taskData[DURATION] as num).toDouble(),
-            done: taskData[DONE],
-          ),
-          // TODO: maybe better idea to update the done percentage?
-          onDoneChange: (value) {
-            documents[index].reference.updateData({DONE: value});
-          },
+    return TasksListView(
+      tasks: documents.map<TaskData>((e) {
+        final taskData = _fixTask(e.data);
+        return TaskData.fromMap(
+          taskData,
+          _userTypes,
+          tasksType: tasksType,
+          reference: e.reference,
         );
-      },
-      itemCount: documents.length,
+      }).toList(),
     );
   }
 
-  Widget buildTasksList(DateTime date) {
+  Widget buildTasksList(DateTime date, WidgetBuilder zeroWidget) {
     CollectionReference tasksCollectionRef = Firestore.instance
         .collection(USERS_COLLECTION)
         .document(this.uid)
@@ -109,7 +84,10 @@ class TasksHandler {
       stream: tasksCollectionRef.snapshots(),
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
         if (snapshot.hasData) {
-          return _buildListView(snapshot.data.documents);
+          if (snapshot.data.documents.length > 0)
+            return _buildListView(snapshot.data.documents);
+          else
+            return zeroWidget(context);
         } else {
           return buildLoadingWidget();
         }
@@ -122,9 +100,11 @@ class TasksHandler {
     if (!newData.containsKey(NAME) || !(newData[NAME] is String)) {
       newData[NAME] = "emptyName";
     }
-    if (!newData.containsKey(TYPE) || !(newData[TYPE] is String)) {
-      newData[TYPE] = "emptyType";
-    }
+    if (newData.containsKey(TYPE) && (newData[TYPE] is num)) {
+        newData[TYPE] = (newData[TYPE] as num).toInt();
+      } else {
+        newData[TYPE] = -1;
+      }
     if (!newData.containsKey(DURATION) || !(newData[DURATION] is num)) {
       newData[DURATION] = 0.0;
     }
@@ -141,8 +121,6 @@ class TasksHandler {
   Map<String, dynamic> _fixUser(Map<String, dynamic> data) {
     Map<String, dynamic> newData = data;
 
-    print(newData);
-
     if (newData.containsKey(USER_TASKS_TYPES) &&
         (newData[USER_TASKS_TYPES] is List<dynamic>))
       newData[USER_TASKS_TYPES] = (newData[USER_TASKS_TYPES] as List<dynamic>)
@@ -152,5 +130,69 @@ class TasksHandler {
       newData[USER_TASKS_TYPES] = <String>[];
 
     return newData;
+  }
+
+  Future<void> _writeToDB(
+      DateTime date,
+      Future<dynamic> Function(Transaction, CollectionReference)
+          handler) async {
+    CollectionReference tasksCollectionRef = Firestore.instance
+        .collection(USERS_COLLECTION)
+        .document(this.uid)
+        .collection(tasksCollectionTypesDBNames[tasksType]);
+
+    await Firestore.instance.runTransaction((transaction) async {
+      if (tasksType == TasksCollectionType.TODAYS_TASKS) {
+        final dayDocRef =
+            tasksCollectionRef.document(getTasksDBDocumentName(date));
+
+        final doc = await transaction.get(dayDocRef);
+
+        if (!doc.exists)
+          await transaction.set(dayDocRef, {});
+        else
+          await transaction.update(dayDocRef, {});
+
+        tasksCollectionRef = dayDocRef.collection(TASKS_SUBCOLLECTION);
+      }
+
+      await handler(transaction, tasksCollectionRef);
+    });
+  }
+
+  Future<void> addTasks(List<TaskData> tasks, DateTime date) async {
+    _writeToDB(date, (transaction, tasksCollectionRef) async {
+      tasks.forEach((e) async {
+        final newTaskDocRef = tasksCollectionRef.document();
+        await transaction.set(newTaskDocRef, e.buildMap());
+      });
+    });
+  }
+
+  Future<List<TaskData>> getTasks(DateTime date) async {
+    CollectionReference tasksCollectionRef = Firestore.instance
+        .collection(USERS_COLLECTION)
+        .document(this.uid)
+        .collection(tasksCollectionTypesDBNames[tasksType]);
+
+    if (tasksType == TasksCollectionType.TODAYS_TASKS)
+      tasksCollectionRef = tasksCollectionRef
+          .document(getTasksDBDocumentName(date))
+          .collection(TASKS_SUBCOLLECTION);
+
+    final docs = await tasksCollectionRef.getDocuments();
+
+    final tasks = docs.documents.map((e) {
+      final taskData = _fixTask(e.data);
+      return TaskData(
+        tasksType: tasksType,
+        name: taskData[NAME],
+        typeIndex: taskData[TYPE],
+        durationH: (taskData[DURATION] as num).toDouble(),
+        done: taskData[DONE] ?? 0,
+      );
+    }).toList();
+
+    return tasks;
   }
 }

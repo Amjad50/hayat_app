@@ -3,10 +3,12 @@ import 'package:hayat_app/pages/tasks/task_data.dart';
 import 'package:hayat_app/pages/tasks/view/slider_theme.dart';
 
 class TaskView extends StatefulWidget {
-  TaskView({Key key, this.data, this.onDoneChange}) : super(key: key);
+  TaskView({Key key, this.data, this.onDoneChange, this.selected = false})
+      : super(key: key);
 
   final TaskData data;
   final void Function(int) onDoneChange;
+  final bool selected;
 
   _TaskViewState createState() => _TaskViewState();
 }
@@ -55,6 +57,7 @@ class _TaskViewState extends State<TaskView> {
         });
         widget.onDoneChange(_donePercent.toInt());
       },
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }
 
@@ -76,8 +79,13 @@ class _TaskViewState extends State<TaskView> {
     return Padding(
       padding: const EdgeInsets.all(6.0),
       child: Material(
-        borderRadius: BorderRadius.circular(5),
         elevation: 1,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(5),
+          side: widget.selected
+              ? BorderSide(color: Colors.green, width: 2.5)
+              : BorderSide.none,
+        ),
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
@@ -109,7 +117,7 @@ class _TaskViewState extends State<TaskView> {
                 child: Row(
                   children: <Widget>[
                     Text(
-                      widget.data.type,
+                      widget.data.typeString,
                       style: Theme.of(context).textTheme.body1.copyWith(
                             color: Theme.of(context).textTheme.caption.color,
                           ),
