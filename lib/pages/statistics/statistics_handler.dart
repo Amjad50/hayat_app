@@ -113,7 +113,7 @@ class StatisticsHandler {
       final taskData = _fixTask(e.data);
       final task = TaskData(
         name: taskData[NAME],
-        type: taskData[TYPE],
+        tasksType: taskData[TYPE], // TODO: get userTypes, and perform computation using this and userTypes
         durationH: (taskData[DURATION] as num).toDouble(),
         done: taskData[DONE],
       );
