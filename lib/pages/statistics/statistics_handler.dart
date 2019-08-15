@@ -8,9 +8,12 @@ const TASKS_SUBCOLLECTION = "tasks";
 const USERS_COLLECTION = "users";
 
 class StatisticsHandler {
-  StatisticsHandler({@required this.uid});
+  StatisticsHandler({@required this.uid, @required this.onChange});
+
+  static const DEFAULT_TIMEOUT_DURATION = Duration(seconds: 5);
 
   final String uid;
+  final void Function() onChange;
   bool _isLoading = false;
   bool _doneInit = false;
   bool _isError = false;
@@ -38,41 +41,65 @@ class StatisticsHandler {
     return _monthsScores.reduce((a, b) => a.max(b));
   }
 
-  Future<void> init(void Function() onChange) async {
+  /// return true if the init function should stop and exit
+  /// just an internal solution
+  bool _update(String newMessage) {
+    if (_doneInit) return true;
+    print(newMessage);
+    _message = newMessage;
+    onChange();
+    return false;
+  }
+
+  Future<void> init() async {
     _isLoading = true;
 
-    Firestore.instance.settings(persistenceEnabled: true);
-
-    if (_doneInit) return;
-    _message = "processing main documents info";
-    onChange();
+    if (_update("processing main documents info")) return;
 
     final documents = await Firestore.instance
         .collection(USERS_COLLECTION)
         .document(this.uid)
         .collection(TASKS_SUBCOLLECTION)
-        .getDocuments();
+        .getDocuments()
+        .timeout(
+      DEFAULT_TIMEOUT_DURATION,
+      onTimeout: () {
+        _timedout();
+        onChange();
+        return null;
+      },
+    );
 
+    if (documents == null) return;
     for (final child in documents.documents) {
-      if (_doneInit) return;
-      _message = "processing ${child.documentID}";
-      onChange();
-      await _processAndAddDocumentEntry(child);
+      if (_update("processing document: ${child.documentID}")) return;
+      await _processAndAddDocumentEntry(child).timeout(
+        DEFAULT_TIMEOUT_DURATION,
+        onTimeout: () {
+          _timedout();
+        },
+      );
     }
 
-    if (_doneInit) return;
+    if (_update("processing months data")) return;
     _computeMonths();
 
     _isLoading = false;
     _doneInit = true;
   }
 
-  void timedout() {
+  void _timedout() {
     _isLoading = false;
     _doneInit = true;
     _isError = true;
     _message =
         "Connection Timed out!\nMight be because there is no internet connection.";
+    onChange();
+  }
+
+  void dispose() {
+    _isLoading = false;
+    _doneInit = true;
   }
 
   void _computeMonths() {
@@ -113,7 +140,8 @@ class StatisticsHandler {
       final taskData = _fixTask(e.data);
       final task = TaskData(
         name: taskData[NAME],
-        tasksType: taskData[TYPE], // TODO: get userTypes, and perform computation using this and userTypes
+        // TODO: get userTypes, and perform computation using this and userTypes
+        typeIndex: taskData[TYPE],
         durationH: (taskData[DURATION] as num).toDouble(),
         done: taskData[DONE],
       );
@@ -136,8 +164,10 @@ Map<String, dynamic> _fixTask(Map<String, dynamic> data) {
   if (!newData.containsKey(NAME) || !(newData[NAME] is String)) {
     newData[NAME] = "emptyName";
   }
-  if (!newData.containsKey(TYPE) || !(newData[TYPE] is String)) {
-    newData[TYPE] = "emptyType";
+  if (newData.containsKey(TYPE) && (newData[TYPE] is num)) {
+    newData[TYPE] = (newData[TYPE] as num).toInt();
+  } else {
+    newData[TYPE] = -1;
   }
   if (!newData.containsKey(DURATION) || !(newData[DURATION] is num)) {
     newData[DURATION] = 0.0;

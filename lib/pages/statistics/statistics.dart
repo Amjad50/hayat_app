@@ -13,9 +13,6 @@ class StatisticsPage extends BasePage {
 
 class _StatisticsPageState extends State<StatisticsPage> {
   _StatisticsPageState();
-
-  static const DEFAULT_TIMEOUT_DURATION = Duration(seconds: 30);
-
   StatisticsHandler statisticsHandler;
 
   // to avoid error of updating the widget, after dispose
@@ -25,16 +22,17 @@ class _StatisticsPageState extends State<StatisticsPage> {
   void initState() {
     super.initState();
     _updateWidget = setState;
-    statisticsHandler = StatisticsHandler(uid: widget.uid);
-    statisticsHandler
-        .init(() => _updateWidget(() {}))
-        .timeout(DEFAULT_TIMEOUT_DURATION, onTimeout: statisticsHandler.timedout)
-        .then((_) => _updateWidget(() {}));
+    statisticsHandler = StatisticsHandler(
+      uid: widget.uid,
+      onChange: () => _updateWidget(() {}),
+    );
+    statisticsHandler.init().then((_) => _updateWidget(() {}));
   }
 
   @override
   void dispose() {
     _updateWidget = (_) {};
+    statisticsHandler.dispose();
     super.dispose();
   }
 
@@ -152,7 +150,11 @@ class _StatisticsPageState extends State<StatisticsPage> {
         ),
       );
     else if (statisticsHandler.isError)
-      return Center(child: Text(statisticsHandler.message, textAlign: TextAlign.center,));
+      return Center(
+          child: Text(
+        statisticsHandler.message,
+        textAlign: TextAlign.center,
+      ));
     else
       return _buildMainView();
   }
