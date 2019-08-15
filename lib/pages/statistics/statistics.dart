@@ -1,7 +1,6 @@
-import 'package:charts_flutter/flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:hayat_app/pages/basepage.dart';
-import 'package:hayat_app/pages/statistics/score.dart';
+import 'package:hayat_app/pages/statistics/score_graph.dart';
 import 'package:hayat_app/pages/statistics/statistics_handler.dart';
 import 'package:hayat_app/utils.dart';
 
@@ -60,30 +59,13 @@ class _StatisticsPageState extends State<StatisticsPage> {
 
   Widget _buildDaysGraph() {
     return _card(
-      LineChart(
-        <Series<Score, num>>[
-          Series<Score, num>(
-              id: "Days",
-              data: statisticsHandler.daysScores,
-              measureFn: (score, index) => score.score,
-              domainFn: (score, index) => index),
-        ],
-      ),
+      ScoreGraph(data: statisticsHandler.daysScores, id: "Days"),
     );
   }
 
   Widget _buildMonthGraph() {
     return _card(
-      LineChart(
-        <Series<Score, num>>[
-          Series<Score, num>(
-            id: "Days",
-            data: statisticsHandler.monthsScores,
-            measureFn: (score, index) => score.score,
-            domainFn: (score, index) => index,
-          ),
-        ],
-      ),
+      ScoreGraph.month(data: statisticsHandler.monthsScores, id: "Months"),
     );
   }
 
