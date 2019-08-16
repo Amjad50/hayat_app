@@ -2,7 +2,13 @@ import 'package:charts_flutter/flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:hayat_app/pages/statistics/score.dart';
 
-enum _SUBTRACT_TYPE { LAST_WEEK, LAST_MONTH, LAST_YEAR, ALL_TIME }
+enum _SUBTRACT_TYPE {
+  LAST_WEEK,
+  LAST_MONTH,
+  LAST_SIX_MONTHS,
+  LAST_YEAR,
+  ALL_TIME
+}
 
 class ScoreGraph extends StatefulWidget {
   ScoreGraph({Key key, @required this.data, @required this.id})
@@ -24,12 +30,24 @@ class ScoreGraph extends StatefulWidget {
 class _ScoreGraphState extends State<ScoreGraph> {
   _SUBTRACT_TYPE _choosenType = _SUBTRACT_TYPE.ALL_TIME;
 
-  static const _items = {
-    _SUBTRACT_TYPE.LAST_WEEK: "Last week",
-    _SUBTRACT_TYPE.LAST_MONTH: "Last Month",
-    _SUBTRACT_TYPE.LAST_YEAR: "Last Year",
-    _SUBTRACT_TYPE.ALL_TIME: "All Time",
-  };
+  Map<_SUBTRACT_TYPE, String> _items;
+
+  @override
+  void initState() {
+    super.initState();
+    _items = widget._isMonth
+        ? {}
+        : {
+            _SUBTRACT_TYPE.LAST_WEEK: "Last week",
+            _SUBTRACT_TYPE.LAST_MONTH: "Last Month",
+          };
+
+    _items.addAll({
+      _SUBTRACT_TYPE.LAST_SIX_MONTHS: "Last Six Months",
+      _SUBTRACT_TYPE.LAST_YEAR: "Last Year",
+      _SUBTRACT_TYPE.ALL_TIME: "All Time",
+    });
+  }
 
   List<DropdownMenuItem<_SUBTRACT_TYPE>> _buildDropDownItems() {
     final list = List<DropdownMenuItem<_SUBTRACT_TYPE>>(_items.length);
@@ -57,30 +75,27 @@ class _ScoreGraphState extends State<ScoreGraph> {
   }
 
   List<Score> _getData() {
-    bool Function(Score) handler = (_) => false;
-
-    DateTime now = DateTime.now();
+    final DateTime now = DateTime.now();
+    DateTime afterEdit;
 
     switch (_choosenType) {
       case _SUBTRACT_TYPE.LAST_WEEK:
-        final beforeWeek = DateTime(now.year, now.month, now.day - 7 + 1);
-        handler = (e) => e.date.isBefore(beforeWeek);
+        afterEdit = DateTime(now.year, now.month, now.day - 7 + 1);
         break;
       case _SUBTRACT_TYPE.LAST_MONTH:
-        final beforeMonth = DateTime(now.year, now.month - 1, now.day + 1);
-
-        handler = (e) => e.date.isBefore(beforeMonth);
+        afterEdit = DateTime(now.year, now.month - 1, now.day + 1);
+        break;
+      case _SUBTRACT_TYPE.LAST_SIX_MONTHS:
+        afterEdit = DateTime(now.year, now.month - 6, now.day + 1);
         break;
       case _SUBTRACT_TYPE.LAST_YEAR:
-        final beforeYear = DateTime(now.year - 1, now.month, now.day + 1);
-
-        handler = (e) => e.date.isBefore(beforeYear);
+        afterEdit = DateTime(now.year - 1, now.month, now.day + 1);
         break;
       case _SUBTRACT_TYPE.ALL_TIME:
-        // no change to handler (default to ALL_TIME)
+        afterEdit = DateTime.fromMillisecondsSinceEpoch(0);
         break;
     }
-    return widget.data.skipWhile(handler).toList();
+    return widget.data.skipWhile((e) => e.date.isBefore(afterEdit)).toList();
   }
 
   Widget _buildChart() {
@@ -104,7 +119,7 @@ class _ScoreGraphState extends State<ScoreGraph> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             Text(widget.id),
-            !widget._isMonth ? _buildChoose() : Container(),
+            _buildChoose(),
           ],
         ),
         Expanded(

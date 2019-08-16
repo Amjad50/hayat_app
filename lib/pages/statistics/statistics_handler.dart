@@ -10,7 +10,7 @@ const USERS_COLLECTION = "users";
 class StatisticsHandler {
   StatisticsHandler({@required this.uid, @required this.onChange});
 
-  static const DEFAULT_TIMEOUT_DURATION = Duration(seconds: 5);
+  static const DEFAULT_TIMEOUT_DURATION = Duration(seconds: 7);
 
   final String uid;
   final void Function() onChange;
