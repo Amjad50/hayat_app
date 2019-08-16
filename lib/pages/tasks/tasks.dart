@@ -115,7 +115,8 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
               final routineHandler = _taskshandlers[
                   widget.tabs.indexOf(TasksCollectionType.ROUTINE_TASKS)];
 
-              await todayHandler.addTasks(await routineHandler.getTasks(_choosenDay), _choosenDay);
+              await todayHandler.addTasks(
+                  await routineHandler.getTasks(_choosenDay), _choosenDay);
               _updateWidget(() {
                 _populateLoading = false;
               });
@@ -124,6 +125,14 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
         ],
       ),
     );
+  }
+
+  Widget _buildEmptyTasksMessage(BuildContext context) {
+    return Center(
+        child: Text(
+      "No Tasks Found",
+      textAlign: TextAlign.center,
+    ));
   }
 
   Widget _buildTopBar() {
@@ -178,7 +187,13 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
                     (_populateLoading && _tabsController.index == 1))
                   return buildLoadingWidget();
                 else
-                  return e.buildTasksList(_choosenDay, _buildPopulateRoutines);
+                  return e.buildTasksList(
+                      _choosenDay,
+                      // TODO: fix this spagetti code
+                      e.tasksType == TasksCollectionType.TODAYS_TASKS &&
+                              _choosenDay.difference(DateTime.now()).inDays == 0
+                          ? _buildPopulateRoutines
+                          : _buildEmptyTasksMessage);
               },
             );
           },
