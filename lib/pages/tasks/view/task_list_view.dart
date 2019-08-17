@@ -14,6 +14,7 @@ class TasksListView extends StatefulWidget {
 }
 
 class _TasksListViewState extends State<TasksListView> {
+  GlobalKey<AnimatedListState> _listKey = GlobalKey();
   _TasksListViewState() {
     _selected = HashSet<int>();
   }
@@ -30,11 +31,17 @@ class _TasksListViewState extends State<TasksListView> {
 
   void _delete() async {
     final refernces = List<DocumentReference>(_selected.length);
-    int i = 0;
+    int refI = 0;
     setState(() {
       _selected.forEach((i) {
-        final task = widget.tasks.removeAt(i);
-        refernces[i++] = task.reference;
+        final task = widget.tasks[i];
+        _listKey.currentState.removeItem(
+          i,
+          (a, b) => Container(),
+          duration: Duration(milliseconds: 300),
+        );
+
+        refernces[refI++] = task.reference;
       });
       _selected.clear();
     });
@@ -44,8 +51,9 @@ class _TasksListViewState extends State<TasksListView> {
   }
 
   Widget _buildList() {
-    return ListView.builder(
-      itemBuilder: (context, index) {
+    return AnimatedList(
+      key: _listKey,
+      itemBuilder: (context, index, animation) {
         final taskView = TaskView(
             data: widget.tasks[index],
             onDoneChange: (value) {
@@ -64,15 +72,16 @@ class _TasksListViewState extends State<TasksListView> {
           },
         );
       },
-      itemCount: widget.tasks.length,
+      initialItemCount: widget.tasks.length,
     );
   }
 
   Widget _buildDeleteButton() {
     return RaisedButton.icon(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
       color: Colors.red.shade500,
       icon: const Icon(Icons.delete),
-      label: const Text("Delete"),
+      label: const Text("DELETE SELECTED"),
       onPressed: () {
         _delete();
       },
