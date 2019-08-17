@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -5,7 +6,16 @@ import 'package:hayat_app/auth/auth_state.dart';
 import 'package:hayat_app/pages/home.dart';
 import 'package:hayat_app/auth/loginsignup.dart';
 
-void main() => runApp(MainApp());
+void main() async {
+  await init();
+  runApp(MainApp());
+}
+
+Future<void> init() async {
+  Firestore.instance.settings(
+    persistenceEnabled: true,
+  );
+}
 
 class MainApp extends StatelessWidget {
   static const _TITLE = "Hayat App";
@@ -73,14 +83,13 @@ class _RootPageState extends State<RootPage> {
   Widget build(BuildContext context) {
     switch (_state) {
       case AuthState.AUTHENTICATED:
-        return HomePage(
-          title: widget.title,
-          signout: _signout,
-          uid: _uid
-        );
+        return HomePage(title: widget.title, signout: _signout, uid: _uid);
         break;
       case AuthState.NOT_AUTHENTICATED:
-        return LoginSignupPage(onlogin: _reloadUser, googleSignIn: widget._googleSignIn,);
+        return LoginSignupPage(
+          onlogin: _reloadUser,
+          googleSignIn: widget._googleSignIn,
+        );
         break;
       case AuthState.NOT_DETERMINED:
         return _buildLoading();
