@@ -39,10 +39,12 @@ class TasksHandler {
   }
 
   Future<void> createTask(BuildContext context, DateTime date) async {
-    final result = await showDialog<TaskData>(
-      context: context,
-      builder: (BuildContext context) =>
-          NewTaskDialog(tasksType: this.tasksType, userTypes: _userTypes),
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute<TaskData>(
+        fullscreenDialog: true,
+        builder: (BuildContext context) =>
+            NewTaskDialog(tasksType: this.tasksType, userTypes: _userTypes),
+      ),
     );
 
     if (result != null) {
@@ -57,6 +59,7 @@ class TasksHandler {
 
   Widget _buildListView(List<DocumentSnapshot> documents) {
     return TasksListView(
+      tasksType: tasksType,
       tasks: documents.map<TaskData>((e) {
         final taskData = _fixTask(e.data);
         return TaskData.fromMap(
@@ -101,10 +104,10 @@ class TasksHandler {
       newData[NAME] = "emptyName";
     }
     if (newData.containsKey(TYPE) && (newData[TYPE] is num)) {
-        newData[TYPE] = (newData[TYPE] as num).toInt();
-      } else {
-        newData[TYPE] = -1;
-      }
+      newData[TYPE] = (newData[TYPE] as num).toInt();
+    } else {
+      newData[TYPE] = -1;
+    }
     if (!newData.containsKey(DURATION) || !(newData[DURATION] is num)) {
       newData[DURATION] = 0.0;
     }

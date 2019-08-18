@@ -52,4 +52,8 @@ class TaskData {
 
     return map;
   }
+
+  static int byTypeComparator(TaskData a, TaskData b) {
+    return (a.typeIndex - b.typeIndex);
+  }
 }

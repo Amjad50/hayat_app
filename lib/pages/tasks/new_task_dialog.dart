@@ -50,9 +50,8 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
     return TextFormField(
       keyboardType: TextInputType.text,
       maxLines: 1,
-      decoration: InputDecoration(
-        labelText: "Name",
-      ),
+      decoration:
+          InputDecoration(labelText: "Name", border: OutlineInputBorder()),
       onSaved: (value) => _name = value,
       validator: (value) {
         if (value.isEmpty) {
@@ -76,6 +75,7 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
     return DropdownButtonFormField<int>(
       decoration: InputDecoration(
         labelText: "Type",
+        border: OutlineInputBorder(),
       ),
       items: items,
       value: _typeIndex,
@@ -95,9 +95,8 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
     return TextFormField(
       keyboardType: TextInputType.number,
       maxLines: 1,
-      decoration: InputDecoration(
-        labelText: "Duration",
-      ),
+      decoration:
+          InputDecoration(labelText: "Duration", border: OutlineInputBorder()),
       onSaved: (value) => _durationH = double.parse(value),
       validator: (value) {
         if (value.isEmpty || double.parse(value) <= 0) {
@@ -111,22 +110,26 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
   Widget _buildMainDialogBox() {
     return Form(
       key: _formKey,
-      child: SingleChildScrollView(
-        padding: EdgeInsets.only(bottom: 20.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            _buildNameInput(),
-            _buildTypeInput(),
-            _buildDurationInput(),
-          ],
-        ),
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        children: <Widget>[
+          _buildNameInput(),
+          _buildTypeInput(),
+          _buildDurationInput(),
+        ]
+            .map(
+              (e) => Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: e,
+              ),
+            )
+            .toList(),
       ),
     );
   }
 
   Widget _buildSubmitButton() {
-    return RaisedButton(
+    return FlatButton(
       onPressed: _validateAndSubmit,
       child: const Text(
         "SUBMIT",
@@ -136,24 +139,24 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
   }
 
   Widget _buildCancelButton() {
-    return RaisedButton(
+    return FlatButton(
       onPressed: () {
         Navigator.pop(context);
       },
       child: const Text(
         "CANCEL",
-        style: _white,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-      title: const Text("New Task"),
-      content: _buildMainDialogBox(),
-      actions: <Widget>[_buildCancelButton(), _buildSubmitButton()],
+    return Scaffold(
+      appBar: AppBar(
+        actions: <Widget>[_buildSubmitButton()],
+        title: const Text("New Task"),
+      ),
+      body: _buildMainDialogBox(),
     );
   }
 }
