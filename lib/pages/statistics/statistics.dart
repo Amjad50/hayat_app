@@ -1,7 +1,6 @@
-import 'package:charts_flutter/flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:hayat_app/pages/basepage.dart';
-import 'package:hayat_app/pages/statistics/score.dart';
+import 'package:hayat_app/pages/statistics/score_graph.dart';
 import 'package:hayat_app/pages/statistics/statistics_handler.dart';
 import 'package:hayat_app/utils.dart';
 
@@ -13,9 +12,6 @@ class StatisticsPage extends BasePage {
 
 class _StatisticsPageState extends State<StatisticsPage> {
   _StatisticsPageState();
-
-  static const DEFAULT_TIMEOUT_DURATION = Duration(seconds: 30);
-
   StatisticsHandler statisticsHandler;
 
   // to avoid error of updating the widget, after dispose
@@ -25,16 +21,17 @@ class _StatisticsPageState extends State<StatisticsPage> {
   void initState() {
     super.initState();
     _updateWidget = setState;
-    statisticsHandler = StatisticsHandler(uid: widget.uid);
-    statisticsHandler
-        .init(() => _updateWidget(() {}))
-        .timeout(DEFAULT_TIMEOUT_DURATION, onTimeout: statisticsHandler.timedout)
-        .then((_) => _updateWidget(() {}));
+    statisticsHandler = StatisticsHandler(
+      uid: widget.uid,
+      onChange: () => _updateWidget(() {}),
+    );
+    statisticsHandler.init().then((_) => _updateWidget(() {}));
   }
 
   @override
   void dispose() {
     _updateWidget = (_) {};
+    statisticsHandler.dispose();
     super.dispose();
   }
 
@@ -62,30 +59,13 @@ class _StatisticsPageState extends State<StatisticsPage> {
 
   Widget _buildDaysGraph() {
     return _card(
-      LineChart(
-        <Series<Score, num>>[
-          Series<Score, num>(
-              id: "Days",
-              data: statisticsHandler.daysScores,
-              measureFn: (score, index) => score.score,
-              domainFn: (score, index) => index),
-        ],
-      ),
+      ScoreGraph(data: statisticsHandler.daysScores, id: "Days"),
     );
   }
 
   Widget _buildMonthGraph() {
     return _card(
-      LineChart(
-        <Series<Score, num>>[
-          Series<Score, num>(
-            id: "Days",
-            data: statisticsHandler.monthsScores,
-            measureFn: (score, index) => score.score,
-            domainFn: (score, index) => index,
-          ),
-        ],
-      ),
+      ScoreGraph.month(data: statisticsHandler.monthsScores, id: "Months"),
     );
   }
 
@@ -152,7 +132,11 @@ class _StatisticsPageState extends State<StatisticsPage> {
         ),
       );
     else if (statisticsHandler.isError)
-      return Center(child: Text(statisticsHandler.message, textAlign: TextAlign.center,));
+      return Center(
+          child: Text(
+        statisticsHandler.message,
+        textAlign: TextAlign.center,
+      ));
     else
       return _buildMainView();
   }

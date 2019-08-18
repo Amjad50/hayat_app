@@ -2,15 +2,23 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hayat_app/pages/statistics/score.dart';
 import 'package:hayat_app/pages/tasks/task_data.dart';
+import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
 import 'package:hayat_app/utils.dart';
 
 const TASKS_SUBCOLLECTION = "tasks";
 const USERS_COLLECTION = "users";
+const USER_TASKS_TYPES = "tasks_types";
 
 class StatisticsHandler {
-  StatisticsHandler({@required this.uid});
+  StatisticsHandler({@required this.uid, @required this.onChange});
+
+  static const DEFAULT_TIMEOUT_DURATION = Duration(seconds: 7);
 
   final String uid;
+  final void Function() onChange;
+
+  int userTypesLength;
+
   bool _isLoading = false;
   bool _doneInit = false;
   bool _isError = false;
@@ -38,41 +46,71 @@ class StatisticsHandler {
     return _monthsScores.reduce((a, b) => a.max(b));
   }
 
-  Future<void> init(void Function() onChange) async {
+  /// return true if the init function should stop and exit
+  /// just an internal solution
+  bool _update(String newMessage) {
+    if (_doneInit) return true;
+    print(newMessage);
+    _message = newMessage;
+    onChange();
+    return false;
+  }
+
+  Future<void> init() async {
     _isLoading = true;
 
-    Firestore.instance.settings(persistenceEnabled: true);
+    if (_update("processing main documents info")) return;
 
-    if (_doneInit) return;
-    _message = "processing main documents info";
-    onChange();
+    final preprocessedUserTypes = await Firestore.instance
+        .collection(USERS_COLLECTION)
+        .document(this.uid)
+        .get();
+    userTypesLength = _getUserTypesLength(preprocessedUserTypes.data);
 
     final documents = await Firestore.instance
         .collection(USERS_COLLECTION)
         .document(this.uid)
         .collection(TASKS_SUBCOLLECTION)
-        .getDocuments();
+        .getDocuments()
+        .timeout(
+      DEFAULT_TIMEOUT_DURATION,
+      onTimeout: () {
+        _timedout();
+        onChange();
+        return null;
+      },
+    );
 
+    if (documents == null) return;
     for (final child in documents.documents) {
-      if (_doneInit) return;
-      _message = "processing ${child.documentID}";
-      onChange();
-      await _processAndAddDocumentEntry(child);
+      if (_update("processing document: ${child.documentID}")) return;
+      await _processAndAddDocumentEntry(child).timeout(
+        DEFAULT_TIMEOUT_DURATION,
+        onTimeout: () {
+          _timedout();
+        },
+      );
     }
 
-    if (_doneInit) return;
+    if (_update("processing months data")) return;
     _computeMonths();
 
     _isLoading = false;
     _doneInit = true;
   }
 
-  void timedout() {
+  void _timedout() {
     _isLoading = false;
     _doneInit = true;
     _isError = true;
     _message =
         "Connection Timed out!\nMight be because there is no internet connection.";
+    onChange();
+  }
+
+  void dispose() {
+    _isLoading = false;
+    _doneInit = true;
   }
 
   void _computeMonths() {
@@ -81,7 +119,7 @@ class StatisticsHandler {
     // because they are sorted,
     // the work is easy
     DateTime lastMonth = _daysScores[0].date;
-    double score = 0;
+    int score = 0;
 
     for (final child in _daysScores) {
       // different month
@@ -103,17 +141,19 @@ class StatisticsHandler {
     _daysScores.add(Score(date, await _computeScore(document.reference)));
   }
 
-  Future<double> _computeScore(DocumentReference parent) async {
+  Future<int> _computeScore(DocumentReference parent) async {
     final tasksCollection = parent.collection(TASKS_SUBCOLLECTION);
     final tasks = (await tasksCollection.getDocuments()).documents;
 
-    double finalScore = 0;
+    int finalScore = 0;
 
     tasks.forEach((e) {
       final taskData = _fixTask(e.data);
       final task = TaskData(
+        typeString: "",
+        tasksType: TasksCollectionType.TODAYS_TASKS,
         name: taskData[NAME],
-        tasksType: taskData[TYPE], // TODO: get userTypes, and perform computation using this and userTypes
+        typeIndex: taskData[TYPE],
         durationH: (taskData[DURATION] as num).toDouble(),
         done: taskData[DONE],
       );
@@ -124,10 +164,17 @@ class StatisticsHandler {
     return finalScore;
   }
 
-  double _computeTaskScore(TaskData task) {
-    // TODO: add the fourmula
+  int _computeTaskScore(TaskData task) {
+    double finalResult = 1;
 
-    return 1;
+    finalResult *= task.done / 10;
+    finalResult *= task.durationH;
+
+    if (!(userTypesLength == 0 || task.typeIndex == -1)) {
+      finalResult *= (userTypesLength - task.typeIndex) / userTypesLength;
+    }
+
+    return finalResult.round();
   }
 }
 
@@ -136,8 +183,10 @@ Map<String, dynamic> _fixTask(Map<String, dynamic> data) {
   if (!newData.containsKey(NAME) || !(newData[NAME] is String)) {
     newData[NAME] = "emptyName";
   }
-  if (!newData.containsKey(TYPE) || !(newData[TYPE] is String)) {
-    newData[TYPE] = "emptyType";
+  if (newData.containsKey(TYPE) && (newData[TYPE] is num)) {
+    newData[TYPE] = (newData[TYPE] as num).toInt();
+  } else {
+    newData[TYPE] = -1;
   }
   if (!newData.containsKey(DURATION) || !(newData[DURATION] is num)) {
     newData[DURATION] = 0.0;
@@ -148,4 +197,12 @@ Map<String, dynamic> _fixTask(Map<String, dynamic> data) {
     newData[DONE] = 0;
   }
   return newData;
+}
+
+int _getUserTypesLength(Map<String, dynamic> data) {
+  if (data.containsKey(USER_TASKS_TYPES) &&
+      (data[USER_TASKS_TYPES] is List<dynamic>))
+    return (data[USER_TASKS_TYPES] as List<dynamic>).length;
+  else
+    return 0;
 }

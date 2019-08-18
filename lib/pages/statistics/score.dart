@@ -11,9 +11,9 @@ class Score {
 
   final DateTime _date;
   final bool _isMonth;
-  double _score;
+  int _score;
 
-  double get score => _score;
+  int get score => _score;
 
   DateTime get date {
     if (_isMonth)
