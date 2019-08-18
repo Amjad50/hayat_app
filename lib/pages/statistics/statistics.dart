@@ -14,6 +14,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
   _StatisticsPageState();
   StatisticsHandler statisticsHandler;
 
+  bool _reInit = false;
+
   // to avoid error of updating the widget, after dispose
   void Function(void Function()) _updateWidget;
 
@@ -32,6 +34,14 @@ class _StatisticsPageState extends State<StatisticsPage> {
     _updateWidget = (_) {};
     statisticsHandler.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleRefresh() async {
+    _reInit = true;
+    await statisticsHandler.reInit();
+    _updateWidget(() {
+      _reInit = false;
+    });
   }
 
   Widget _card(Widget widget, [String titleString]) {
@@ -103,7 +113,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
     );
   }
 
-  Widget _buildMainView() {
+  Widget _buildDoneStatisticsData() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -115,14 +125,13 @@ class _StatisticsPageState extends State<StatisticsPage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildMainView() {
     if (statisticsHandler.isLoading)
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            buildLoadingWidget(),
+            _reInit ? Container() : buildLoadingWidget(),
             Padding(
               padding: EdgeInsets.only(top: 16),
             ),
@@ -137,6 +146,24 @@ class _StatisticsPageState extends State<StatisticsPage> {
         textAlign: TextAlign.center,
       ));
     else
-      return _buildMainView();
+      return _buildDoneStatisticsData();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: _handleRefresh,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: <Widget>[
+          SliverFillViewport(
+            delegate: SliverChildBuilderDelegate(
+              (_, __) => _buildMainView(),
+              childCount: 1,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

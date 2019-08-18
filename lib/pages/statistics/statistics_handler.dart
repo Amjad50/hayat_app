@@ -57,8 +57,17 @@ class StatisticsHandler {
     return false;
   }
 
+  Future<void> reInit() async {
+    _doneInit = true;
+    _message = "";
+    _daysScores.clear();
+    _monthsScores.clear();
+    await init();
+  }
+
   Future<void> init() async {
     _isLoading = true;
+    _doneInit = false;
 
     userTypesLength = FireStoreHandler.instance.user.tasksTypes.length;
     
