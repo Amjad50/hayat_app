@@ -6,6 +6,9 @@ import 'package:hayat_app/pages/tasks/task_data.dart';
 import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
 import 'package:hayat_app/pages/tasks/view/task_view.dart';
 
+const String _NOT_DONE_LABEL = "Not Done";
+const String _DONE_LABEL = "Done";
+
 class TasksListView extends StatefulWidget {
   TasksListView({Key key, @required this.tasks, @required this.tasksType})
       : super(key: key);
@@ -42,7 +45,10 @@ class _TasksListViewState extends State<TasksListView> {
   }
 
   Widget _buildLabel(String label) {
-    return Text(label);
+    return Container(
+      color: Colors.black26,
+      child: Text(label),
+    );
   }
 
   Widget _buildItem(TaskData task) {
@@ -92,7 +98,7 @@ class _TasksListViewState extends State<TasksListView> {
       slivers: <Widget>[
         SliverList(
           delegate: SliverChildListDelegate(
-            [buildNotDone ? _buildLabel("NOT DONE") : Container()],
+            [buildNotDone ? _buildLabel(_NOT_DONE_LABEL) : Container()],
           ),
         ),
         SliverList(
@@ -105,7 +111,7 @@ class _TasksListViewState extends State<TasksListView> {
         ),
         SliverList(
           delegate: SliverChildListDelegate(
-            [buildDone ? _buildLabel("DONE") : Container()],
+            [buildDone ? _buildLabel(_DONE_LABEL) : Container()],
           ),
         ),
         SliverList(
