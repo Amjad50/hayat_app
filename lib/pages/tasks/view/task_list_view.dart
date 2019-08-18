@@ -14,7 +14,6 @@ class TasksListView extends StatefulWidget {
 }
 
 class _TasksListViewState extends State<TasksListView> {
-  GlobalKey<AnimatedListState> _listKey = GlobalKey();
   _TasksListViewState() {
     _selected = HashSet<int>();
   }
@@ -29,31 +28,25 @@ class _TasksListViewState extends State<TasksListView> {
     });
   }
 
-  void _delete() async {
+  void _delete() {
     final refernces = List<DocumentReference>(_selected.length);
     int refI = 0;
     setState(() {
-      _selected.forEach((i) {
-        final task = widget.tasks[i];
-        _listKey.currentState.removeItem(
-          i,
-          (a, b) => Container(),
-          duration: Duration(milliseconds: 300),
-        );
-
-        refernces[refI++] = task.reference;
+      _selected.map((i) => widget.tasks[i]).toList().forEach((e) {
+        widget.tasks.remove(e);
+        refernces[refI++] = e.reference;
       });
       _selected.clear();
     });
+
     for (var ref in refernces) {
-      await ref.delete();
+      ref.delete();
     }
   }
 
   Widget _buildList() {
-    return AnimatedList(
-      key: _listKey,
-      itemBuilder: (context, index, animation) {
+    return ListView.builder(
+      itemBuilder: (context, index) {
         final taskView = TaskView(
             data: widget.tasks[index],
             onDoneChange: (value) {
@@ -72,7 +65,7 @@ class _TasksListViewState extends State<TasksListView> {
           },
         );
       },
-      initialItemCount: widget.tasks.length,
+      itemCount: widget.tasks.length,
     );
   }
 
