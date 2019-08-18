@@ -2,10 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hayat_app/pages/statistics/score.dart';
 import 'package:hayat_app/pages/tasks/task_data.dart';
+import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
 import 'package:hayat_app/utils.dart';
 
 const TASKS_SUBCOLLECTION = "tasks";
 const USERS_COLLECTION = "users";
+const USER_TASKS_TYPES = "tasks_types";
 
 class StatisticsHandler {
   StatisticsHandler({@required this.uid, @required this.onChange});
@@ -14,6 +16,9 @@ class StatisticsHandler {
 
   final String uid;
   final void Function() onChange;
+
+  int userTypesLength;
+
   bool _isLoading = false;
   bool _doneInit = false;
   bool _isError = false;
@@ -55,6 +60,12 @@ class StatisticsHandler {
     _isLoading = true;
 
     if (_update("processing main documents info")) return;
+
+    final preprocessedUserTypes = await Firestore.instance
+        .collection(USERS_COLLECTION)
+        .document(this.uid)
+        .get();
+    userTypesLength = _getUserTypesLength(preprocessedUserTypes.data);
 
     final documents = await Firestore.instance
         .collection(USERS_COLLECTION)
@@ -108,7 +119,7 @@ class StatisticsHandler {
     // because they are sorted,
     // the work is easy
     DateTime lastMonth = _daysScores[0].date;
-    double score = 0;
+    int score = 0;
 
     for (final child in _daysScores) {
       // different month
@@ -130,17 +141,18 @@ class StatisticsHandler {
     _daysScores.add(Score(date, await _computeScore(document.reference)));
   }
 
-  Future<double> _computeScore(DocumentReference parent) async {
+  Future<int> _computeScore(DocumentReference parent) async {
     final tasksCollection = parent.collection(TASKS_SUBCOLLECTION);
     final tasks = (await tasksCollection.getDocuments()).documents;
 
-    double finalScore = 0;
+    int finalScore = 0;
 
     tasks.forEach((e) {
       final taskData = _fixTask(e.data);
       final task = TaskData(
+        typeString: "",
+        tasksType: TasksCollectionType.TODAYS_TASKS,
         name: taskData[NAME],
-        // TODO: get userTypes, and perform computation using this and userTypes
         typeIndex: taskData[TYPE],
         durationH: (taskData[DURATION] as num).toDouble(),
         done: taskData[DONE],
@@ -152,10 +164,17 @@ class StatisticsHandler {
     return finalScore;
   }
 
-  double _computeTaskScore(TaskData task) {
-    // TODO: add the fourmula
+  int _computeTaskScore(TaskData task) {
+    double finalResult = 1;
 
-    return 1;
+    finalResult *= task.done / 10;
+    finalResult *= task.durationH;
+
+    if (!(userTypesLength == 0 || task.typeIndex == -1)) {
+      finalResult *= (userTypesLength - task.typeIndex) / userTypesLength;
+    }
+
+    return finalResult.round();
   }
 }
 
@@ -178,4 +197,12 @@ Map<String, dynamic> _fixTask(Map<String, dynamic> data) {
     newData[DONE] = 0;
   }
   return newData;
+}
+
+int _getUserTypesLength(Map<String, dynamic> data) {
+  if (data.containsKey(USER_TASKS_TYPES) &&
+      (data[USER_TASKS_TYPES] is List<dynamic>))
+    return (data[USER_TASKS_TYPES] as List<dynamic>).length;
+  else
+    return 0;
 }
