@@ -59,6 +59,7 @@ class TasksHandler {
 
   Widget _buildListView(List<DocumentSnapshot> documents) {
     return TasksListView(
+      tasksType: tasksType,
       tasks: documents.map<TaskData>((e) {
         final taskData = _fixTask(e.data);
         return TaskData.fromMap(

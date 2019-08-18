@@ -3,69 +3,120 @@ import 'dart:collection';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:hayat_app/pages/tasks/task_data.dart';
+import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
 import 'package:hayat_app/pages/tasks/view/task_view.dart';
 
 class TasksListView extends StatefulWidget {
-  TasksListView({Key key, @required this.tasks}) : super(key: key);
+  TasksListView({Key key, @required this.tasks, @required this.tasksType})
+      : super(key: key);
 
   final List<TaskData> tasks;
+  final TasksCollectionType tasksType;
 
   _TasksListViewState createState() => _TasksListViewState();
 }
 
 class _TasksListViewState extends State<TasksListView> {
-  _TasksListViewState() {
-    _selected = HashSet<int>();
-  }
-  HashSet<int> _selected;
+  _TasksListViewState() : _selected = HashSet<DocumentReference>();
 
-  void _select(int index, bool isSelect) {
+  final HashSet<DocumentReference> _selected;
+
+  void _select(DocumentReference reference, bool isSelect) {
     setState(() {
       if (isSelect)
-        _selected.add(index);
+        _selected.add(reference);
       else
-        _selected.remove(index);
+        _selected.remove(reference);
     });
   }
 
   void _delete() {
-    final refernces = List<DocumentReference>(_selected.length);
-    int refI = 0;
     setState(() {
-      _selected.map((i) => widget.tasks[i]).toList().forEach((e) {
-        widget.tasks.remove(e);
-        refernces[refI++] = e.reference;
+      _selected.forEach((r) {
+        widget.tasks.removeWhere((e) => e.reference == r);
+        r.delete();
       });
+
       _selected.clear();
     });
+  }
 
-    for (var ref in refernces) {
-      ref.delete();
-    }
+  Widget _buildLabel(String label) {
+    return Text(label);
+  }
+
+  Widget _buildItem(TaskData task) {
+    final taskView = TaskView(
+        data: task,
+        onDoneChange: (value) {
+          setState(() {
+            task.reference.updateData({DONE: value});
+          });
+        },
+        selected: _selected.contains(task.reference));
+
+    return GestureDetector(
+      key: ValueKey(task.hashCode),
+      behavior: HitTestBehavior.opaque,
+      child: taskView,
+      onLongPress: () {
+        _select(task.reference, !taskView.selected);
+      },
+      onTap: () {
+        if (_selected.isNotEmpty) _select(task.reference, !taskView.selected);
+      },
+    );
   }
 
   Widget _buildList() {
-    return ListView.builder(
-      itemBuilder: (context, index) {
-        final taskView = TaskView(
-            data: widget.tasks[index],
-            onDoneChange: (value) {
-              widget.tasks[index].reference.updateData({DONE: value});
-            },
-            selected: _selected.contains(index));
+    // sort the list
+    widget.tasks.sort(TaskData.byTypeComparator);
 
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          child: taskView,
-          onLongPress: () {
-            _select(index, !taskView.selected);
-          },
-          onTap: () {
-            if (_selected.isNotEmpty) _select(index, !taskView.selected);
-          },
-        );
-      },
-      itemCount: widget.tasks.length,
+    bool buildNotDone = false, buildDone = false;
+
+    List<TaskData> notDoneTasks, doneTasks;
+    if (widget.tasksType != TasksCollectionType.ROUTINE_TASKS) {
+      notDoneTasks = widget.tasks.where((e) => e.done != 100).toList();
+      buildNotDone = notDoneTasks.isNotEmpty;
+
+      doneTasks = widget.tasks.where((e) => e.done == 100).toList();
+      buildDone = doneTasks.isNotEmpty;
+    } else {
+      notDoneTasks = widget.tasks;
+      doneTasks = [];
+
+      // do not build any labels
+    }
+
+    return CustomScrollView(
+      slivers: <Widget>[
+        SliverList(
+          delegate: SliverChildListDelegate(
+            [buildNotDone ? _buildLabel("NOT DONE") : Container()],
+          ),
+        ),
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              return _buildItem(notDoneTasks[index]);
+            },
+            childCount: notDoneTasks.length,
+          ),
+        ),
+        SliverList(
+          delegate: SliverChildListDelegate(
+            [buildDone ? _buildLabel("DONE") : Container()],
+          ),
+        ),
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              return _buildItem(doneTasks[index]);
+            },
+            childCount: doneTasks.length,
+          ),
+        ),
+      ],
     );
   }
 
