@@ -1,9 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:hayat_app/DB/firestore_handler.dart';
 import 'package:hayat_app/pages/page.dart';
 
 class HomePage extends StatefulWidget {
-  HomePage({Key key, this.title, this.signout, this.uid}) : assert(uid != null), super(key: key);
+  HomePage({Key key, this.title, this.signout, this.uid})
+      : assert(uid != null),
+        super(key: key);
 
   final String title;
   final VoidCallback signout;
@@ -16,9 +19,15 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _index;
 
+  bool _loading;
+
   @override
   void initState() {
     super.initState();
+    _loading = true;
+    FireStoreHandler.instance
+        .init(widget.uid)
+        .then((_) => setState(() => _loading = false));
     _index = 0;
   }
 
@@ -41,6 +50,10 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildLoading() {
+    return const Center(child: const CircularProgressIndicator());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,9 +63,11 @@ class _HomePageState extends State<HomePage> {
           _buildAppbarMenu(),
         ],
       ),
-      body: Container(
-        child: allPages[_index].widget(uid: widget.uid),
-      ),
+      body: _loading
+          ? _buildLoading()
+          : Container(
+              child: allPages[_index].widget(uid: widget.uid),
+            ),
       bottomNavigationBar: BottomNavigationBar(
         items: allPages
             .map(
