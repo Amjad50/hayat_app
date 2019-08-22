@@ -5,7 +5,7 @@ import 'package:hayat_app/pages/tasks/tasks_handler.dart';
 import 'package:hayat_app/utils.dart';
 
 class TasksPage extends BasePage {
-  TasksPage({Key key, String uid}) : super(key: key, uid: uid);
+  TasksPage({Key key}) : super(key: key);
 
   final tabs = TasksCollectionType.values;
 
@@ -34,10 +34,10 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
     });
     _choosenDay = DateTime.now();
     _taskshandlers = widget.tabs
-        .map((e) => TasksHandler(uid: widget.uid, tasksType: e))
+        .map((e) => TasksHandler(tasksType: e))
         .toList();
     _taskshandlers
-        .forEach((e) => e.initUserTypes().then((_) => _updateWidget(() {})));
+        .forEach((e) => e.initUserTypes());
   }
 
   @override

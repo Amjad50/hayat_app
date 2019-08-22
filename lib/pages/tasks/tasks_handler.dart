@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:hayat_app/DB/firestore_handler.dart';
 import 'package:hayat_app/pages/tasks/new_task_dialog.dart';
 import 'package:hayat_app/pages/tasks/task_data.dart';
 import 'package:hayat_app/pages/tasks/view/task_list_view.dart';
@@ -11,25 +12,19 @@ const USER_TASKS_TYPES = "tasks_types";
 const TASKS_SUBCOLLECTION = "tasks";
 
 class TasksHandler {
-  TasksHandler({this.uid, @required this.tasksType});
+  TasksHandler({@required this.tasksType});
 
-  final String uid;
+  // final String uid;
   final TasksCollectionType tasksType;
 
   bool isLoading;
 
   List<String> _userTypes;
 
-  Future<void> initUserTypes() async {
+  void initUserTypes() {
     isLoading = true;
-    final snapshot = await Firestore.instance
-        .collection(USERS_COLLECTION)
-        .document(this.uid)
-        .get();
 
-    final data = _fixUser(snapshot.data);
-
-    _userTypes = data[USER_TASKS_TYPES];
+    _userTypes = FireStoreHandler.instance.user.tasksTypes;
 
     if (_userTypes.isEmpty)
       _userTypes.add(
@@ -73,9 +68,8 @@ class TasksHandler {
   }
 
   Widget buildTasksList(DateTime date, WidgetBuilder zeroWidget) {
-    CollectionReference tasksCollectionRef = Firestore.instance
-        .collection(USERS_COLLECTION)
-        .document(this.uid)
+    CollectionReference tasksCollectionRef = FireStoreHandler
+        .instance.user.baseRef
         .collection(tasksCollectionTypesDBNames[tasksType]);
 
     if (tasksType == TasksCollectionType.TODAYS_TASKS)
@@ -139,9 +133,8 @@ class TasksHandler {
       DateTime date,
       Future<dynamic> Function(Transaction, CollectionReference)
           handler) async {
-    CollectionReference tasksCollectionRef = Firestore.instance
-        .collection(USERS_COLLECTION)
-        .document(this.uid)
+    CollectionReference tasksCollectionRef = FireStoreHandler
+        .instance.user.baseRef
         .collection(tasksCollectionTypesDBNames[tasksType]);
 
     await Firestore.instance.runTransaction((transaction) async {
@@ -173,9 +166,8 @@ class TasksHandler {
   }
 
   Future<List<TaskData>> getTasks(DateTime date) async {
-    CollectionReference tasksCollectionRef = Firestore.instance
-        .collection(USERS_COLLECTION)
-        .document(this.uid)
+    CollectionReference tasksCollectionRef = FireStoreHandler
+        .instance.user.baseRef
         .collection(tasksCollectionTypesDBNames[tasksType]);
 
     if (tasksType == TasksCollectionType.TODAYS_TASKS)
