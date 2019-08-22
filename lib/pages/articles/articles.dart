@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:hayat_app/DB/firestore_handler.dart';
 import 'package:hayat_app/pages/articles/article_card.dart';
 import 'package:hayat_app/pages/articles/article_data.dart';
 import 'package:hayat_app/pages/articles/article_view_page.dart';
@@ -55,7 +56,7 @@ DocumentSnapshot _fillNotFoundUserData(DocumentSnapshot snapshot) {
 }
 
 class ArticlesPage extends BasePage {
-  ArticlesPage({Key key, String uid}) : super(key: key, uid: uid);
+  ArticlesPage({Key key}) : super(key: key);
 
   _ArticlesPageState createState() => _ArticlesPageState();
 }
@@ -154,80 +155,64 @@ class _ArticlesPageState extends State<ArticlesPage> {
 
           if (count > 0) {
             return StreamBuilder<DocumentSnapshot>(
-              stream: Firestore.instance
-                  .collection(USERS_COLLECTION)
-                  .document(widget.uid)
-                  .snapshots(),
+              stream: FireStoreHandler.instance.user.baseRef.snapshots(),
               builder: (BuildContext context,
                   AsyncSnapshot<DocumentSnapshot> userdata_snapshot) {
                 if (userdata_snapshot.hasData) {
-                  if (userdata_snapshot.data.exists) {
-                    DocumentSnapshot userdata =
-                        _fillNotFoundUserData(userdata_snapshot.data);
+                  DocumentSnapshot userdata =
+                      _fillNotFoundUserData(userdata_snapshot.data);
 
-                    // handles changes on star (favorite)
-                    void favChange(DocumentReference reference, bool isFav) {
-                      final newMap = Map<String, dynamic>();
+                  // handles changes on star (favorite)
+                  void favChange(DocumentReference reference, bool isFav) {
+                    final newMap = Map<String, dynamic>();
 
-                      final newFAVS = List.from(userdata.data[FAVS]);
+                    final newFAVS = List.from(userdata.data[FAVS]);
 
-                      if (isFav) {
-                        if (!newFAVS.contains(reference))
-                          newFAVS.add(reference);
-                      } else {
-                        newFAVS.remove(reference);
-                      }
-
-                      newMap[FAVS] = newFAVS;
-
-                      // TODO: fix problem star does not change if clicked inside an article and then 
-                      // the user went back to the main menu (here).
-                      Firestore.instance
-                          .collection(USERS_COLLECTION)
-                          .document(widget.uid)
-                          .updateData(newMap)
-                          .then((e) => setState(() {}));
+                    if (isFav) {
+                      if (!newFAVS.contains(reference)) newFAVS.add(reference);
+                    } else {
+                      newFAVS.remove(reference);
                     }
 
-                    final List<ArticleData> articles =
-                        articles_snapshot.data.documents.map(
-                      (e) {
-                        final current = _fillNotFoundArticleData(e);
-                        final article = ArticleData(
-                          mainTitle: current[MAINTITLE],
-                          articlePage: current[PAGEREF],
-                          heroTag: current.documentID,
-                          title: current[TITLE],
-                          textColor: current[TEXTCOLOR],
-                          img: current[IMG],
-                          tags: current[TAGS],
-                          date: current[DATE],
-                          star: userdata.data[FAVS].contains(current.reference),
-                        );
+                    newMap[FAVS] = newFAVS;
 
-                        article.star.addListener(() =>
-                            favChange(current.reference, article.star.value));
-                        return article;
-                      },
-                    ).toList();
-
-                    final children =
-                        _buildPageViews(articles, userdata.data[FAVS]);
-
-                    return PageView(
-                      controller: _controller,
-                      scrollDirection: Axis.vertical,
-                      children: children,
-                    );
-                  } else {
-                    Firestore.instance
-                        .collection(USERS_COLLECTION)
-                        .document(widget.uid)
-                        .setData(Map<String, dynamic>()).then((v) {
-                          setState(() {
-                          });
-                        });
+                    // TODO: fix problem star does not change if clicked inside an article and then
+                    // the user went back to the main menu (here).
+                    FireStoreHandler.instance.user.baseRef
+                        .updateData(newMap)
+                        .then((_) => setState(() {}));
                   }
+
+                  final List<ArticleData> articles =
+                      articles_snapshot.data.documents.map(
+                    (e) {
+                      final current = _fillNotFoundArticleData(e);
+                      final article = ArticleData(
+                        mainTitle: current[MAINTITLE],
+                        articlePage: current[PAGEREF],
+                        heroTag: current.documentID,
+                        title: current[TITLE],
+                        textColor: current[TEXTCOLOR],
+                        img: current[IMG],
+                        tags: current[TAGS],
+                        date: current[DATE],
+                        star: userdata.data[FAVS].contains(current.reference),
+                      );
+
+                      article.star.addListener(() =>
+                          favChange(current.reference, article.star.value));
+                      return article;
+                    },
+                  ).toList();
+
+                  final children =
+                      _buildPageViews(articles, userdata.data[FAVS]);
+
+                  return PageView(
+                    controller: _controller,
+                    scrollDirection: Axis.vertical,
+                    children: children,
+                  );
                 }
                 return _buildProgress();
               },

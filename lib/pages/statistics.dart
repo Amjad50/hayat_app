@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hayat_app/pages/basepage.dart';
 
 class StatisticsPage extends BasePage {
-  StatisticsPage({Key key, String uid}) : super(key: key, uid: uid);
+  StatisticsPage({Key key}) : super(key: key);
 
   _StatisticsPageState createState() => _StatisticsPageState();
 }
