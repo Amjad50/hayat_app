@@ -53,9 +53,10 @@ class _ArticlesPageState extends State<ArticlesPage> {
     const _EACH_PAGE_COUNT = 4;
 
     final list = <Widget>[];
-    if (articles.length >= 1) {
+    if (articles.length > 0) {
       list.add(_buildArticleCardEntry(articles[0], large: true));
 
+      /// build a section of the view
       int _generatePage(int oldIndex, int max) {
         var childList = <Widget>[];
         int i = oldIndex;
@@ -79,10 +80,13 @@ class _ArticlesPageState extends State<ArticlesPage> {
       }
 
       var currentI = 1;
+
+      //generate uniformed pages, that are filled with articles.
       for (var _ = 0; _ < (articles.length - 1) ~/ _EACH_PAGE_COUNT; _++) {
         currentI = _generatePage(currentI, currentI + _EACH_PAGE_COUNT);
       }
 
+      // generate the remaining, along with padding.
       if (currentI < articles.length) {
         _generatePage(currentI, articles.length);
       }
