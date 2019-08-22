@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hayat_app/DB/base_db_type.dart';
-import 'package:hayat_app/DB/firestore_handler.dart';
+
+const String FAVS = "favs", TASKS_TYPES = "tasks_types";
 
 class DBUser extends BaseDBType {
   DBUser(this.baseRef, {@required this.favs, @required this.tasksTypes});
@@ -9,8 +10,8 @@ class DBUser extends BaseDBType {
     data = fix(data);
     return DBUser(
       baseRef,
-      favs: data[USER_DOC_FAVS],
-      tasksTypes: data[USER_DOC_TASKS_TYPES],
+      favs: data[FAVS],
+      tasksTypes: data[TASKS_TYPES],
     );
   }
 
@@ -21,8 +22,8 @@ class DBUser extends BaseDBType {
   String get uid => this.baseRef.documentID;
 
   static const Map<String, dynamic> defaults = {
-    USER_DOC_FAVS: [],
-    USER_DOC_TASKS_TYPES: [
+    FAVS: [],
+    TASKS_TYPES: [
       "Very Important",
       "Important",
       "Nuetral",
@@ -30,22 +31,23 @@ class DBUser extends BaseDBType {
   };
 
   static Map<String, dynamic> fix(Map<String, dynamic> data) {
-    if (data.containsKey(USER_DOC_FAVS) &&
-        (data[USER_DOC_FAVS] is List<dynamic>))
-      data[USER_DOC_FAVS] = data[USER_DOC_FAVS].cast<DocumentReference>();
+    // FAVS
+    if (data.containsKey(FAVS) && (data[FAVS] is List<dynamic>))
+      data[FAVS] =
+          List<DocumentReference>.from(data[FAVS].cast<DocumentReference>());
     else
-      data[USER_DOC_FAVS] = <DocumentReference>[];
+      data[FAVS] = <DocumentReference>[];
 
-    if (data.containsKey(USER_DOC_TASKS_TYPES) &&
-        (data[USER_DOC_TASKS_TYPES] is List<dynamic>))
-      data[USER_DOC_TASKS_TYPES] = data[USER_DOC_TASKS_TYPES].cast<String>();
+    // TASKS_TYPES
+    if (data.containsKey(TASKS_TYPES) && (data[TASKS_TYPES] is List<dynamic>))
+      data[TASKS_TYPES] = List<String>.from(data[TASKS_TYPES].cast<String>());
     else
-      data[USER_DOC_TASKS_TYPES] = <String>[];
+      data[TASKS_TYPES] = <String>[];
     return data;
   }
 
   Map<String, dynamic> toMap() => {
-        USER_DOC_FAVS: this.favs,
-        USER_DOC_TASKS_TYPES: this.tasksTypes,
+        FAVS: this.favs,
+        TASKS_TYPES: this.tasksTypes,
       };
 }

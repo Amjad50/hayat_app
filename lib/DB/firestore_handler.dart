@@ -1,9 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hayat_app/DB/db_user.dart';
 
-const String USERS_COLLECTION = "users",
-    USER_DOC_FAVS = "favs",
-    USER_DOC_TASKS_TYPES = "tasks_types";
+const String USERS_COLLECTION = "users";
 
 class FireStoreHandler {
   FireStoreHandler([String uid]) {
