@@ -5,8 +5,6 @@ import 'package:hayat_app/DB/db_user.dart';
 import 'package:hayat_app/utils.dart';
 
 const String USERS_COLLECTION = "users",
-    USER_DOC_FAVS = "favs",
-    USER_DOC_TASKS_TYPES = "tasks_types",
     ARTICLES_HEADERS_COLLECTION = "articles_headers",
     ARTICLES_PAGES_COLLECTION = "articles_pages";
 
