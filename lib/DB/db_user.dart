@@ -20,6 +20,42 @@ class DBUser extends BaseDBType {
 
   String get uid => this.baseRef.documentID;
 
+  Future<bool> invertFav(DocumentReference ref) async {
+    bool ret;
+    if (favs.contains(ref)) {
+      favs.remove(ref);
+      ret = false;
+    } else {
+      favs.add(ref);
+      ret = true;
+    }
+    await baseRef.updateData({USER_DOC_FAVS: favs});
+
+    return ret;
+  }
+
+  Map<String, dynamic> toMap() => {
+        USER_DOC_FAVS: this.favs,
+        USER_DOC_TASKS_TYPES: this.tasksTypes,
+      };
+
+  static Map<String, dynamic> fix(Map<String, dynamic> data) {
+    if (data.containsKey(USER_DOC_FAVS) &&
+        (data[USER_DOC_FAVS] is List<dynamic>))
+      data[USER_DOC_FAVS] = List<DocumentReference>.from(
+          data[USER_DOC_FAVS].cast<DocumentReference>());
+    else
+      data[USER_DOC_FAVS] = <DocumentReference>[];
+
+    if (data.containsKey(USER_DOC_TASKS_TYPES) &&
+        (data[USER_DOC_TASKS_TYPES] is List<dynamic>))
+      data[USER_DOC_TASKS_TYPES] =
+          List<String>.from(data[USER_DOC_TASKS_TYPES].cast<String>());
+    else
+      data[USER_DOC_TASKS_TYPES] = <String>[];
+    return data;
+  }
+
   static const Map<String, dynamic> defaults = {
     USER_DOC_FAVS: [],
     USER_DOC_TASKS_TYPES: [
@@ -28,24 +64,4 @@ class DBUser extends BaseDBType {
       "Nuetral",
     ],
   };
-
-  static Map<String, dynamic> fix(Map<String, dynamic> data) {
-    if (data.containsKey(USER_DOC_FAVS) &&
-        (data[USER_DOC_FAVS] is List<dynamic>))
-      data[USER_DOC_FAVS] = data[USER_DOC_FAVS].cast<DocumentReference>();
-    else
-      data[USER_DOC_FAVS] = <DocumentReference>[];
-
-    if (data.containsKey(USER_DOC_TASKS_TYPES) &&
-        (data[USER_DOC_TASKS_TYPES] is List<dynamic>))
-      data[USER_DOC_TASKS_TYPES] = data[USER_DOC_TASKS_TYPES].cast<String>();
-    else
-      data[USER_DOC_TASKS_TYPES] = <String>[];
-    return data;
-  }
-
-  Map<String, dynamic> toMap() => {
-        USER_DOC_FAVS: this.favs,
-        USER_DOC_TASKS_TYPES: this.tasksTypes,
-      };
 }
