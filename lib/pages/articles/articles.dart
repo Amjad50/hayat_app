@@ -1,52 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:hayat_app/DB/db_article.dart';
 import 'package:hayat_app/DB/db_user.dart';
 import 'package:hayat_app/DB/firestore_handler.dart';
 import 'package:hayat_app/pages/articles/article_card.dart';
-import 'package:hayat_app/pages/articles/article_data.dart';
 import 'package:hayat_app/pages/articles/article_view_page.dart';
 import 'package:hayat_app/pages/basepage.dart';
-
-const TITLE = 'title';
-const MAINTITLE = 'mainTitle';
-const IMG = 'img';
-const TEXTCOLOR = 'textColor';
-const TAGS = 'tags';
-const PAGEREF = 'page';
-const DATE = 'date';
-
-const FAVS = 'favs';
-
-const ARTICLES_HEADERS_COLLECTION = 'articles_headers';
-const ARTICLES_PAGES_COLLECTION = 'articles_pages';
-const USERS_COLLECTION = 'users';
-
-/// setup the default values in case any of them is not present
-DocumentSnapshot _fillNotFoundArticleData(DocumentSnapshot snapshot) {
-  if (!snapshot.data.containsKey(TITLE)) snapshot.data[TITLE] = 'null';
-  if (!snapshot.data.containsKey(IMG))
-    snapshot.data[IMG] =
-        'https://images.pexels.com/photos/949587/pexels-photo-949587.' +
-            'jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500';
-  if (!snapshot.data.containsKey(TEXTCOLOR))
-    snapshot.data[TEXTCOLOR] = "#ffffffff";
-
-  if (!snapshot.data.containsKey(PAGEREF))
-    snapshot.data[PAGEREF] = Firestore.instance
-        .collection(ARTICLES_PAGES_COLLECTION)
-        .document('default');
-
-  if (!snapshot.data.containsKey(TAGS) ||
-      !(snapshot.data[TAGS] is List<dynamic>))
-    snapshot.data[TAGS] = List<dynamic>();
-
-  if (!snapshot.data.containsKey(MAINTITLE) ||
-      !(snapshot.data[MAINTITLE] is List<dynamic>))
-    snapshot.data[MAINTITLE] = ['**no**\ntitle'];
-
-  if (!snapshot.data.containsKey(DATE)) snapshot.data[DATE] = Timestamp.now();
-  return snapshot;
-}
 
 class ArticlesPage extends BasePage {
   ArticlesPage({Key key}) : super(key: key);
@@ -73,11 +31,7 @@ class _ArticlesPageState extends State<ArticlesPage> {
     super.dispose();
   }
 
-  Widget _buildProgress() {
-    return const Center(child: const CircularProgressIndicator());
-  }
-
-  Widget _buildArticleCardEntry(final ArticleData article, {large = false}) {
+  Widget _buildArticleCardEntry(final DBArticle article, {large = false}) {
     return Container(
       margin: EdgeInsets.all(6),
       child: InkWell(
@@ -94,7 +48,7 @@ class _ArticlesPageState extends State<ArticlesPage> {
     );
   }
 
-  List<Widget> _buildPageViews(List<ArticleData> articles, List<dynamic> favs) {
+  List<Widget> _buildPageViews(List<DBArticle> articles) {
     // the best size for Nexus 5X is '6'
     const _EACH_PAGE_COUNT = 4;
 
@@ -139,59 +93,25 @@ class _ArticlesPageState extends State<ArticlesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: Firestore.instance
-          .collection(ARTICLES_HEADERS_COLLECTION)
-          .snapshots(),
-      builder: (BuildContext context,
-          AsyncSnapshot<QuerySnapshot> articles_snapshot) {
-        if (articles_snapshot.hasData) {
-          int count = articles_snapshot.data.documents.length;
+    return FireStoreHandler.instance.articlesHeadersStreamBuilder(
+        builder: (BuildContext context, List<DBArticle> articles) {
+      int count = articles.length;
 
-          if (count > 0) {
-            final List<ArticleData> articles =
-                articles_snapshot.data.documents.map(
-              (e) {
-                final current = _fillNotFoundArticleData(e);
-                final article = ArticleData(
-                  mainTitle: current[MAINTITLE],
-                  articlePage: current[PAGEREF],
-                  heroTag: current.documentID,
-                  title: current[TITLE],
-                  textColor: current[TEXTCOLOR],
-                  img: current[IMG],
-                  tags: current[TAGS],
-                  date: current[DATE],
-                  star: user.favs.contains(current.reference),
-                );
+      if (count > 0) {
+        final children = _buildPageViews(articles);
 
-                article.star.addListener(() {
-                  user
-                      .invertFav(current.reference)
-                      .then((_) => setState(() {}));
-                });
-                return article;
-              },
-            ).toList();
+        return PageView(
+          controller: _controller,
+          scrollDirection: Axis.vertical,
+          children: children,
+        );
+      }
 
-            final children = _buildPageViews(articles, user.favs);
-
-            return PageView(
-              controller: _controller,
-              scrollDirection: Axis.vertical,
-              children: children,
-            );
-          }
-
-          return const Center(
-              child: const Text(
-            _ERROR_NO_ARTICLES,
-            style: TextStyle(color: Colors.red),
-          ));
-        }
-
-        return _buildProgress();
-      },
-    );
+      return const Center(
+          child: const Text(
+        _ERROR_NO_ARTICLES,
+        style: TextStyle(color: Colors.red),
+      ));
+    });
   }
 }

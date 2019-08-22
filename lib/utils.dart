@@ -35,3 +35,7 @@ String parseTimestamp(Timestamp time) {
   return format.format(dateTime).toString();
   //"${DateTime.august} ${dateTime.day}";
 }
+
+Widget buildLoading() {
+  return const Center(child: const CircularProgressIndicator());
+}
