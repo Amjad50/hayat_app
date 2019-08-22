@@ -33,6 +33,14 @@ class DBUser extends BaseDBType {
           .toList();
     else
       data[USER_DOC_FAVS] = <DocumentReference>[];
+
+    if (data.containsKey(USER_DOC_TASKS_TYPES) &&
+        (data[USER_DOC_TASKS_TYPES] is List<dynamic>))
+      data[USER_DOC_TASKS_TYPES] = (data[USER_DOC_TASKS_TYPES] as List<dynamic>)
+          .map<String>((e) => e.toString())
+          .toList();
+    else
+      data[USER_DOC_TASKS_TYPES] = <String>[];
     return data;
   }
 
