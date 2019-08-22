@@ -32,15 +32,15 @@ class DBUser extends BaseDBType {
 
   static Map<String, dynamic> fix(Map<String, dynamic> data) {
     // FAVS
-    if (data.containsKey(FAVS) &&
-        (data[FAVS] is List<dynamic>))
-      data[FAVS] = data[FAVS].cast<DocumentReference>();
+    if (data.containsKey(FAVS) && (data[FAVS] is List<dynamic>))
+      data[FAVS] =
+          List<DocumentReference>.from(data[FAVS].cast<DocumentReference>());
     else
       data[FAVS] = <DocumentReference>[];
 
-    if (data.containsKey(TASKS_TYPES) &&
-        (data[TASKS_TYPES] is List<dynamic>))
-      data[TASKS_TYPES] = data[TASKS_TYPES].cast<String>();
+    // TASKS_TYPES
+    if (data.containsKey(TASKS_TYPES) && (data[TASKS_TYPES] is List<dynamic>))
+      data[TASKS_TYPES] = List<String>.from(data[TASKS_TYPES].cast<String>());
     else
       data[TASKS_TYPES] = <String>[];
     return data;
