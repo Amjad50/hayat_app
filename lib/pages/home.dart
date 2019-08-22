@@ -66,7 +66,7 @@ class _HomePageState extends State<HomePage> {
       body: _loading
           ? _buildLoading()
           : Container(
-              child: allPages[_index].widget(uid: widget.uid),
+              child: allPages[_index].widget(),
             ),
       bottomNavigationBar: BottomNavigationBar(
         items: allPages

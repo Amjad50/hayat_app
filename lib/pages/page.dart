@@ -7,19 +7,19 @@ import 'package:hayat_app/pages/tasks.dart';
 final allPages = <_Page>[
   _Page(
     label: "Articles",
-    widget: ({String uid}) => ArticlesPage(uid: uid),
+    widget: () => ArticlesPage(),
     color: Colors.redAccent,
     icon: Icons.label_outline,
   ),
   _Page(
     label: "Tasks",
-    widget: ({String uid}) => TasksPage(uid: uid),
+    widget: () => TasksPage(),
     color: Colors.greenAccent,
     icon: Icons.dashboard,
   ),
   _Page(
     label: "Stastics",
-    widget: ({String uid}) => StatisticsPage(uid: uid),
+    widget: () => StatisticsPage(),
     color: Colors.amberAccent,
     icon: Icons.language,
   ),
@@ -29,7 +29,7 @@ class _Page {
   _Page({this.label, this.widget, this.color, this.icon});
 
   final String label;
-  final BasePage Function({@required String uid}) widget;
+  final BasePage Function() widget;
   final Color color;
   final IconData icon;
 }
