@@ -33,7 +33,7 @@ class FireStoreHandler {
 
     if (!userDoc.exists) {
       await putData(userDoc.reference, DBUser.defaults);
-      _user = DBUser.fromMap(userDataRef, DBUser.defaults);
+      _user = DBUser.fromMap(userDataRef, Map<String, dynamic>.from(DBUser.defaults));
     } else {
       _user = DBUser.fromMap(userDataRef, userDoc.data);
     }

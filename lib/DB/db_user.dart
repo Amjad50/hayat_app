@@ -7,7 +7,11 @@ class DBUser extends BaseDBType {
   DBUser(this.baseRef, {@required this.favs, @required this.tasksTypes});
   factory DBUser.fromMap(DocumentReference baseRef, Map<String, dynamic> data) {
     data = fix(data);
-    return DBUser(baseRef, favs: data[USER_DOC_FAVS], tasksTypes: data[USER_DOC_TASKS_TYPES]);
+    return DBUser(
+      baseRef,
+      favs: data[USER_DOC_FAVS],
+      tasksTypes: data[USER_DOC_TASKS_TYPES],
+    );
   }
 
   final List<String> tasksTypes;
@@ -28,17 +32,13 @@ class DBUser extends BaseDBType {
   static Map<String, dynamic> fix(Map<String, dynamic> data) {
     if (data.containsKey(USER_DOC_FAVS) &&
         (data[USER_DOC_FAVS] is List<dynamic>))
-      data[USER_DOC_FAVS] = (data[USER_DOC_FAVS] as List<dynamic>)
-          .map<DocumentReference>((e) => e as DocumentReference)
-          .toList();
+      data[USER_DOC_FAVS] = data[USER_DOC_FAVS].cast<DocumentReference>();
     else
       data[USER_DOC_FAVS] = <DocumentReference>[];
 
     if (data.containsKey(USER_DOC_TASKS_TYPES) &&
         (data[USER_DOC_TASKS_TYPES] is List<dynamic>))
-      data[USER_DOC_TASKS_TYPES] = (data[USER_DOC_TASKS_TYPES] as List<dynamic>)
-          .map<String>((e) => e.toString())
-          .toList();
+      data[USER_DOC_TASKS_TYPES] = data[USER_DOC_TASKS_TYPES].cast<String>();
     else
       data[USER_DOC_TASKS_TYPES] = <String>[];
     return data;
