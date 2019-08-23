@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:hayat_app/DB/db_user.dart';
 import 'package:hayat_app/DB/firestore_handler.dart';
 import 'package:hayat_app/pages/tasks/new_task_dialog.dart';
 import 'package:hayat_app/pages/tasks/task_data.dart';
@@ -7,38 +8,20 @@ import 'package:hayat_app/pages/tasks/view/task_list_view.dart';
 import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
 import 'package:hayat_app/utils.dart';
 
-const USERS_COLLECTION = "users";
-const USER_TASKS_TYPES = "tasks_types";
 const TASKS_SUBCOLLECTION = "tasks";
 
 class TasksHandler {
-  TasksHandler({@required this.tasksType});
+  TasksHandler({@required this.tasksType}) : _user = FireStoreHandler.instance.user;
 
-  // final String uid;
   final TasksCollectionType tasksType;
-
-  bool isLoading;
-
-  List<String> _userTypes;
-
-  void initUserTypes() {
-    isLoading = true;
-
-    _userTypes = FireStoreHandler.instance.user.tasksTypes;
-
-    if (_userTypes.isEmpty)
-      _userTypes.add(
-          "ERROR: Empty Types List"); // TODO: use default list in the user dataset
-
-    isLoading = false;
-  }
+  final DBUser _user;
 
   Future<void> createTask(BuildContext context, DateTime date) async {
     final result = await Navigator.of(context).push(
       MaterialPageRoute<TaskData>(
         fullscreenDialog: true,
         builder: (BuildContext context) =>
-            NewTaskDialog(tasksType: this.tasksType, userTypes: _userTypes),
+            NewTaskDialog(tasksType: this.tasksType, userTypes: _user.tasksTypes),
       ),
     );
 
@@ -59,7 +42,7 @@ class TasksHandler {
         final taskData = _fixTask(e.data);
         return TaskData.fromMap(
           taskData,
-          _userTypes,
+          _user.tasksTypes,
           tasksType: tasksType,
           reference: e.reference,
         );
@@ -112,20 +95,6 @@ class TasksHandler {
         newData[DONE] = 0;
       }
     }
-    return newData;
-  }
-
-  Map<String, dynamic> _fixUser(Map<String, dynamic> data) {
-    Map<String, dynamic> newData = data;
-
-    if (newData.containsKey(USER_TASKS_TYPES) &&
-        (newData[USER_TASKS_TYPES] is List<dynamic>))
-      newData[USER_TASKS_TYPES] = (newData[USER_TASKS_TYPES] as List<dynamic>)
-          .map((e) => e.toString())
-          .toList();
-    else
-      newData[USER_TASKS_TYPES] = <String>[];
-
     return newData;
   }
 

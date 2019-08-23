@@ -33,11 +33,8 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
       if (!_tabsController.indexIsChanging) _updateWidget(() {});
     });
     _choosenDay = DateTime.now();
-    _taskshandlers = widget.tabs
-        .map((e) => TasksHandler(tasksType: e))
-        .toList();
-    _taskshandlers
-        .forEach((e) => e.initUserTypes());
+    _taskshandlers =
+        widget.tabs.map((e) => TasksHandler(tasksType: e)).toList();
   }
 
   @override
@@ -159,9 +156,8 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
   }
 
   FloatingActionButton _buildFAB() {
-    if (_taskshandlers[_tabsController.index].isLoading ||
-        (_choosenDay.difference(DateTime.now()).inDays != 0 &&
-            _tabsController.index != 0)) return null;
+    if ((_choosenDay.difference(DateTime.now()).inDays != 0 &&
+        _tabsController.index != 0)) return null;
     return FloatingActionButton(
       child: const Icon(Icons.add),
       onPressed: () {
@@ -183,8 +179,7 @@ class _TasksPageState extends State<TasksPage> with TickerProviderStateMixin {
           (e) {
             return Builder(
               builder: (context) {
-                if (e.isLoading ||
-                    (_populateLoading && _tabsController.index == 1))
+                if (_populateLoading && _tabsController.index == 1)
                   return buildLoadingWidget();
                 else
                   return e.buildTasksList(
