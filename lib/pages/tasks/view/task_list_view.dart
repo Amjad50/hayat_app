@@ -2,7 +2,7 @@ import 'dart:collection';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:hayat_app/pages/tasks/task_data.dart';
+import 'package:hayat_app/DB/db_task.dart';
 import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
 import 'package:hayat_app/pages/tasks/view/task_view.dart';
 
@@ -13,7 +13,7 @@ class TasksListView extends StatefulWidget {
   TasksListView({Key key, @required this.tasks, @required this.tasksType})
       : super(key: key);
 
-  final List<TaskData> tasks;
+  final List<DBTask> tasks;
   final TasksCollectionType tasksType;
 
   _TasksListViewState createState() => _TasksListViewState();
@@ -36,7 +36,7 @@ class _TasksListViewState extends State<TasksListView> {
   void _delete() {
     setState(() {
       _selected.forEach((r) {
-        widget.tasks.removeWhere((e) => e.reference == r);
+        widget.tasks.removeWhere((e) => e.baseRef == r);
         r.delete();
       });
 
@@ -51,36 +51,36 @@ class _TasksListViewState extends State<TasksListView> {
     );
   }
 
-  Widget _buildItem(TaskData task) {
+  Widget _buildItem(DBTask task) {
     final taskView = TaskView(
         data: task,
         onDoneChange: (value) {
           setState(() {
-            task.reference.updateData({DONE: value});
+            task.baseRef.updateData({"done": value});
           });
         },
-        selected: _selected.contains(task.reference));
+        selected: _selected.contains(task.baseRef));
 
     return GestureDetector(
       key: ValueKey(task.hashCode),
       behavior: HitTestBehavior.opaque,
       child: taskView,
       onLongPress: () {
-        _select(task.reference, !taskView.selected);
+        _select(task.baseRef, !taskView.selected);
       },
       onTap: () {
-        if (_selected.isNotEmpty) _select(task.reference, !taskView.selected);
+        if (_selected.isNotEmpty) _select(task.baseRef, !taskView.selected);
       },
     );
   }
 
   Widget _buildList() {
     // sort the list
-    widget.tasks.sort(TaskData.byTypeComparator);
+    widget.tasks.sort(DBTask.byTypeComparator);
 
     bool buildNotDone = false, buildDone = false;
 
-    List<TaskData> notDoneTasks, doneTasks;
+    List<DBTask> notDoneTasks, doneTasks;
     if (widget.tasksType != TasksCollectionType.ROUTINE_TASKS) {
       notDoneTasks = widget.tasks.where((e) => e.done != 100).toList();
       buildNotDone = notDoneTasks.isNotEmpty;

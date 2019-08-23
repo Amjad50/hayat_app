@@ -2,7 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hayat_app/DB/base_db_type.dart';
 
-const String FAVS = "favs", TASKS_TYPES = "tasks_types";
+const String FAVS = "favs",
+    TASKS_TYPES = "tasks_types",
+    TASKS_SUBCOLLECTION = "tasks";
 
 class DBUser extends BaseDBType {
   DBUser(this.baseRef, {@required this.favs, @required this.tasksTypes});

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:hayat_app/pages/tasks/task_data.dart';
+import 'package:hayat_app/DB/db_task.dart';
 import 'package:hayat_app/pages/tasks/view/slider_theme.dart';
 
 class TaskView extends StatefulWidget {
   TaskView({Key key, this.data, this.onDoneChange, this.selected = false})
       : super(key: key);
 
-  final TaskData data;
+  final DBTask data;
   final void Function(int) onDoneChange;
   final bool selected;
 
