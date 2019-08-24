@@ -13,7 +13,7 @@ class DBTask extends BaseDBType {
 
     final int typeIndex = data[TYPE];
     String typeString;
-    if (typeIndex == -1 || typeIndex < 0 || typeIndex >= tasksTypes.length)
+    if (typeIndex == -1 || tasksTypes == null || typeIndex < 0 || typeIndex >= tasksTypes.length)
       typeString = "No type";
     else
       typeString = tasksTypes[typeIndex];

@@ -59,6 +59,7 @@ class _TasksListViewState extends State<TasksListView> {
             task.baseRef.updateData({"done": value});
           });
         },
+        tasksType: widget.tasksType,
         selected: _selected.contains(task.baseRef));
 
     return GestureDetector(

@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:hayat_app/DB/db_task.dart';
+import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
 import 'package:hayat_app/pages/tasks/view/slider_theme.dart';
 
 class TaskView extends StatefulWidget {
-  TaskView({Key key, this.data, this.onDoneChange, this.selected = false})
+  TaskView({Key key, this.data, this.onDoneChange, this.selected = false, this.tasksType})
       : super(key: key);
 
   final DBTask data;
   final void Function(int) onDoneChange;
   final bool selected;
+  final TasksCollectionType tasksType;
 
   _TaskViewState createState() => _TaskViewState();
 }
@@ -62,7 +64,7 @@ class _TaskViewState extends State<TaskView> {
   }
 
   Widget _buildProgressRow() {
-    if (_donePercent == null) return Container();
+    if (widget.tasksType == TasksCollectionType.ROUTINE_TASKS) return Container();
     return Row(
       mainAxisSize: MainAxisSize.max,
       children: <Widget>[

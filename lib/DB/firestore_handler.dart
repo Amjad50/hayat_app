@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:hayat_app/DB/db_task.dart';
 import 'package:hayat_app/DB/db_user.dart';
+import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
 import 'package:hayat_app/utils.dart';
 
 const String USERS_COLLECTION = "users";
@@ -47,13 +48,11 @@ class FireStoreHandler {
   }
 
   Widget tasksStreamBuilder(
-    DateTime date, {
+    DateTime date,
+    TasksCollectionType tasksType, {
     @required Widget Function(BuildContext, List<DBTask>) builder,
   }) {
-    final tasksRef = user.baseRef
-        .collection(TASKS_SUBCOLLECTION)
-        .document(getTasksDBDocumentName(date))
-        .collection(TASKS_SUBCOLLECTION);
+    final tasksRef = _getTasksRef(date, tasksType);
 
     return StreamBuilder<QuerySnapshot>(
       stream: tasksRef.snapshots(),
@@ -74,12 +73,34 @@ class FireStoreHandler {
     );
   }
 
-  Future<void> addTask(DateTime date, DBTask task) async {
-    final tasksRef = user.baseRef
-        .collection(TASKS_SUBCOLLECTION)
-        .document(getTasksDBDocumentName(date))
-        .collection(TASKS_SUBCOLLECTION);
+  Future<void> addTask(
+      DateTime date, TasksCollectionType tasksType, DBTask task) async {
+    final tasksRef = _getTasksRef(date, tasksType);
 
     await tasksRef.add(task.toMap());
+  }
+
+  Future<List<DBTask>> getTasks(
+      DateTime date, TasksCollectionType tasksType) async {
+    final tasksRef = _getTasksRef(date, tasksType);
+
+    final docs = await _getDocuments(tasksRef);
+
+    return docs
+        .map(
+          (e) => DBTask.fromMap(e.reference, e.data, user.tasksTypes),
+        )
+        .toList();
+  }
+
+  CollectionReference _getTasksRef(DateTime date, TasksCollectionType tasksType) {
+    if (tasksType == TasksCollectionType.TODAYS_TASKS)
+      return user.getTasksRef(date);
+    else
+      return user.getRoutineTasksRef();
+  }
+
+  Future<List<DocumentSnapshot>> _getDocuments(CollectionReference ref) async {
+    return (await ref.getDocuments()).documents;
   }
 }
