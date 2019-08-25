@@ -1,7 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:hayat_app/DB/db_task.dart';
+import 'package:hayat_app/DB/firestore_handler.dart';
 import 'package:hayat_app/pages/statistics/score.dart';
-import 'package:hayat_app/pages/tasks/task_data.dart';
 import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
 import 'package:hayat_app/utils.dart';
 
@@ -10,11 +11,10 @@ const USERS_COLLECTION = "users";
 const USER_TASKS_TYPES = "tasks_types";
 
 class StatisticsHandler {
-  StatisticsHandler({@required this.uid, @required this.onChange});
+  StatisticsHandler({@required this.onChange});
 
   static const DEFAULT_TIMEOUT_DURATION = Duration(seconds: 7);
 
-  final String uid;
   final void Function() onChange;
 
   int userTypesLength;
@@ -61,15 +61,9 @@ class StatisticsHandler {
 
     if (_update("processing main documents info")) return;
 
-    final preprocessedUserTypes = await Firestore.instance
-        .collection(USERS_COLLECTION)
-        .document(this.uid)
-        .get();
-    userTypesLength = _getUserTypesLength(preprocessedUserTypes.data);
+    userTypesLength = FireStoreHandler.instance.user.tasksTypes.length;
 
-    final documents = await Firestore.instance
-        .collection(USERS_COLLECTION)
-        .document(this.uid)
+    final documents = await FireStoreHandler.instance.user.baseRef
         .collection(TASKS_SUBCOLLECTION)
         .getDocuments()
         .timeout(
@@ -113,6 +107,37 @@ class StatisticsHandler {
     _doneInit = true;
   }
 
+  Future<void> _processAndAddDocumentEntry(DocumentSnapshot document) async {
+    final date = getDateFromDBDocumentName(document.documentID);
+    if (date == null) return;
+
+    _daysScores.add(Score(date, await _computeScore(date)));
+  }
+
+  Future<int> _computeScore(DateTime date) async {
+    final tasks = await FireStoreHandler.instance.getTasks(date, TasksCollectionType.TODAYS_TASKS);
+    int finalScore = 0;
+
+    tasks.forEach((e) {
+      finalScore += _computeTaskScore(e);
+    });
+
+    return finalScore;
+  }
+
+  int _computeTaskScore(DBTask task) {
+    double finalResult = 1;
+
+    finalResult *= task.done / 10;
+    finalResult *= task.durationH;
+
+    if (!(userTypesLength == 0 || task.typeIndex == -1)) {
+      finalResult *= (userTypesLength - task.typeIndex) / userTypesLength;
+    }
+
+    return finalResult.round();
+  }
+
   void _computeMonths() {
     if (_daysScores.isEmpty) return;
 
@@ -133,76 +158,4 @@ class StatisticsHandler {
     }
     _monthsScores.add(Score.month(lastMonth, score));
   }
-
-  Future<void> _processAndAddDocumentEntry(DocumentSnapshot document) async {
-    final date = getDateFromDBDocumentName(document.documentID);
-    if (date == null) return;
-
-    _daysScores.add(Score(date, await _computeScore(document.reference)));
-  }
-
-  Future<int> _computeScore(DocumentReference parent) async {
-    final tasksCollection = parent.collection(TASKS_SUBCOLLECTION);
-    final tasks = (await tasksCollection.getDocuments()).documents;
-
-    int finalScore = 0;
-
-    tasks.forEach((e) {
-      final taskData = _fixTask(e.data);
-      final task = TaskData(
-        typeString: "",
-        tasksType: TasksCollectionType.TODAYS_TASKS,
-        name: taskData[NAME],
-        typeIndex: taskData[TYPE],
-        durationH: (taskData[DURATION] as num).toDouble(),
-        done: taskData[DONE],
-      );
-
-      finalScore += _computeTaskScore(task);
-    });
-
-    return finalScore;
-  }
-
-  int _computeTaskScore(TaskData task) {
-    double finalResult = 1;
-
-    finalResult *= task.done / 10;
-    finalResult *= task.durationH;
-
-    if (!(userTypesLength == 0 || task.typeIndex == -1)) {
-      finalResult *= (userTypesLength - task.typeIndex) / userTypesLength;
-    }
-
-    return finalResult.round();
-  }
-}
-
-Map<String, dynamic> _fixTask(Map<String, dynamic> data) {
-  Map<String, dynamic> newData = data;
-  if (!newData.containsKey(NAME) || !(newData[NAME] is String)) {
-    newData[NAME] = "emptyName";
-  }
-  if (newData.containsKey(TYPE) && (newData[TYPE] is num)) {
-    newData[TYPE] = (newData[TYPE] as num).toInt();
-  } else {
-    newData[TYPE] = -1;
-  }
-  if (!newData.containsKey(DURATION) || !(newData[DURATION] is num)) {
-    newData[DURATION] = 0.0;
-  }
-  if (newData.containsKey(DONE) && (newData[DONE] is num)) {
-    newData[DONE] = (newData[DONE] as num).toInt();
-  } else {
-    newData[DONE] = 0;
-  }
-  return newData;
-}
-
-int _getUserTypesLength(Map<String, dynamic> data) {
-  if (data.containsKey(USER_TASKS_TYPES) &&
-      (data[USER_TASKS_TYPES] is List<dynamic>))
-    return (data[USER_TASKS_TYPES] as List<dynamic>).length;
-  else
-    return 0;
 }

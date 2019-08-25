@@ -5,7 +5,7 @@ import 'package:hayat_app/pages/statistics/statistics_handler.dart';
 import 'package:hayat_app/utils.dart';
 
 class StatisticsPage extends BasePage {
-  StatisticsPage({Key key, String uid}) : super(key: key, uid: uid);
+  StatisticsPage({Key key}) : super(key: key);
 
   _StatisticsPageState createState() => _StatisticsPageState();
 }
@@ -22,7 +22,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
     super.initState();
     _updateWidget = setState;
     statisticsHandler = StatisticsHandler(
-      uid: widget.uid,
       onChange: () => _updateWidget(() {}),
     );
     statisticsHandler.init().then((_) => _updateWidget(() {}));
