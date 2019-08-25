@@ -5,6 +5,7 @@ import 'package:hayat_app/DB/firestore_handler.dart';
 import 'package:hayat_app/pages/statistics/score.dart';
 import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
 import 'package:hayat_app/utils.dart';
+import 'package:intl/intl.dart';
 
 const TASKS_SUBCOLLECTION = "tasks";
 const USERS_COLLECTION = "users";
@@ -25,8 +26,8 @@ class StatisticsHandler {
 
   String _message = "";
 
-  List<Score> _daysScores = [];
-  List<Score> _monthsScores = [];
+  final List<Score> _daysScores = [];
+  final List<Score> _monthsScores = [];
 
   List<Score> get daysScores => _doneInit ? _daysScores : [];
   List<Score> get monthsScores => _doneInit ? _monthsScores : [];
@@ -59,32 +60,17 @@ class StatisticsHandler {
   Future<void> init() async {
     _isLoading = true;
 
-    if (_update("processing main documents info")) return;
-
     userTypesLength = FireStoreHandler.instance.user.tasksTypes.length;
-
-    final documents = await FireStoreHandler.instance.user.baseRef
-        .collection(TASKS_SUBCOLLECTION)
-        .getDocuments()
-        .timeout(
-      DEFAULT_TIMEOUT_DURATION,
-      onTimeout: () {
-        _timedout();
-        onChange();
-        return null;
-      },
-    );
-
-    if (documents == null) return;
-    for (final child in documents.documents) {
-      if (_update("processing document: ${child.documentID}")) return;
-      await _processAndAddDocumentEntry(child).timeout(
-        DEFAULT_TIMEOUT_DURATION,
-        onTimeout: () {
-          _timedout();
-        },
-      );
-    }
+    
+    final dateFormatter = DateFormat('yyyyMMdd');
+     if (_update("processing months data")) return;
+    await FireStoreHandler.instance.processAllUserTasks<void>((date, tasklist, stop) {
+        if(tasklist == null)
+          return;
+        
+        if(_update("processing document: ${dateFormatter.format(date)}")) stop();
+        _daysScores.add(Score(date, _computeScore(tasklist)));
+    }, DEFAULT_TIMEOUT_DURATION, _timedout);
 
     if (_update("processing months data")) return;
     _computeMonths();
@@ -93,13 +79,14 @@ class StatisticsHandler {
     _doneInit = true;
   }
 
-  void _timedout() {
+  QuerySnapshot _timedout() {
     _isLoading = false;
     _doneInit = true;
     _isError = true;
     _message =
         "Connection Timed out!\nMight be because there is no internet connection.";
     onChange();
+    return null;
   }
 
   void dispose() {
@@ -107,15 +94,7 @@ class StatisticsHandler {
     _doneInit = true;
   }
 
-  Future<void> _processAndAddDocumentEntry(DocumentSnapshot document) async {
-    final date = getDateFromDBDocumentName(document.documentID);
-    if (date == null) return;
-
-    _daysScores.add(Score(date, await _computeScore(date)));
-  }
-
-  Future<int> _computeScore(DateTime date) async {
-    final tasks = await FireStoreHandler.instance.getTasks(date, TasksCollectionType.TODAYS_TASKS);
+  int _computeScore(final List<DBTask> tasks) {
     int finalScore = 0;
 
     tasks.forEach((e) {
