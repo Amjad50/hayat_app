@@ -58,7 +58,7 @@ class DBTask extends BaseDBType {
     if (data.containsKey(DURATION) && (data[DURATION] is num))
       data[DURATION] = (data[DURATION] as num).toDouble();
     else
-      data[DURATION] = 0;
+      data[DURATION] = 0.0;
 
     // DONE
     if (data.containsKey(DONE) && (data[DONE] is num))
