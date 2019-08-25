@@ -72,7 +72,7 @@ class StatisticsHandler {
     userTypesLength = FireStoreHandler.instance.user.tasksTypes.length;
     
     final dateFormatter = DateFormat('yyyyMMdd');
-     if (_update("processing months data")) return;
+     if (_update("fetching tasks info")) return;
     await FireStoreHandler.instance.processAllUserTasks<void>((date, tasklist, stop) {
         if(tasklist == null)
           return;
