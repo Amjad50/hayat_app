@@ -32,6 +32,8 @@ class _HomePageState extends State<HomePage> {
     _index = 0;
 
     NotificationHandler.instance.init();
+    // setup a fixed notifications for daily usage
+    NotificationHandler.instance.setupDailyNotifications();
   }
 
   PopupMenuButton _buildAppbarMenu() {
