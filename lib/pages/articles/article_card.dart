@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:hayat_app/pages/articles/article_data.dart';
+import 'package:hayat_app/DB/db_article.dart';
 import 'package:hayat_app/utils.dart';
 
 class ArticleCard extends StatefulWidget {
@@ -15,7 +15,7 @@ class ArticleCard extends StatefulWidget {
         this._isInsideArticle = true,
         super(key: key);
 
-  final ArticleData article;
+  final DBArticle article;
   final bool large;
   final double _borderRadius;
   final bool _isInsideArticle;
@@ -26,7 +26,7 @@ class ArticleCard extends StatefulWidget {
 class _ArticleCardState extends State<ArticleCard> {
   _ArticleCardState({this.article});
 
-  final ArticleData article;
+  final DBArticle article;
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +35,7 @@ class _ArticleCardState extends State<ArticleCard> {
           fromHeroContext, toHeroContext) {
         return toHeroContext.widget;
       },
-      tag: this.article.heroTag,
+      tag: this.article.baseRef.documentID,
       child: Material(
         color: Colors.transparent,
         child: Container(

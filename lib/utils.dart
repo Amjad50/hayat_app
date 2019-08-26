@@ -99,3 +99,7 @@ String parseTimestamp(Timestamp time) {
   final dateTime = time.toDate();
   return dateToString(dateTime);
 }
+
+Widget buildLoading() {
+  return const Center(child: const CircularProgressIndicator());
+}

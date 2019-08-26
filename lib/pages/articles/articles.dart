@@ -1,61 +1,13 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:hayat_app/DB/db_article.dart';
+import 'package:hayat_app/DB/db_user.dart';
+import 'package:hayat_app/DB/firestore_handler.dart';
 import 'package:hayat_app/pages/articles/article_card.dart';
-import 'package:hayat_app/pages/articles/article_data.dart';
 import 'package:hayat_app/pages/articles/article_view_page.dart';
 import 'package:hayat_app/pages/basepage.dart';
 
-const TITLE = 'title';
-const MAINTITLE = 'mainTitle';
-const IMG = 'img';
-const TEXTCOLOR = 'textColor';
-const TAGS = 'tags';
-const PAGEREF = 'page';
-const DATE = 'date';
-
-const FAVS = 'favs';
-
-const ARTICLES_HEADERS_COLLECTION = 'articles_headers';
-const ARTICLES_PAGES_COLLECTION = 'articles_pages';
-const USERS_COLLECTION = 'users';
-
-/// setup the default values in case any of them is not present
-DocumentSnapshot _fillNotFoundArticleData(DocumentSnapshot snapshot) {
-  if (!snapshot.data.containsKey(TITLE)) snapshot.data[TITLE] = 'null';
-  if (!snapshot.data.containsKey(IMG))
-    snapshot.data[IMG] =
-        'https://images.pexels.com/photos/949587/pexels-photo-949587.' +
-            'jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500';
-  if (!snapshot.data.containsKey(TEXTCOLOR))
-    snapshot.data[TEXTCOLOR] = "#ffffffff";
-
-  if (!snapshot.data.containsKey(PAGEREF))
-    snapshot.data[PAGEREF] = Firestore.instance
-        .collection(ARTICLES_PAGES_COLLECTION)
-        .document('default');
-
-  if (!snapshot.data.containsKey(TAGS) ||
-      !(snapshot.data[TAGS] is List<dynamic>))
-    snapshot.data[TAGS] = List<dynamic>();
-
-  if (!snapshot.data.containsKey(MAINTITLE) ||
-      !(snapshot.data[MAINTITLE] is List<dynamic>))
-    snapshot.data[MAINTITLE] = ['**no**\ntitle'];
-
-  if (!snapshot.data.containsKey(DATE)) snapshot.data[DATE] = Timestamp.now();
-  return snapshot;
-}
-
-DocumentSnapshot _fillNotFoundUserData(DocumentSnapshot snapshot) {
-  if (!snapshot.data.containsKey(FAVS) ||
-      !(snapshot.data[FAVS] is List<dynamic>))
-    snapshot.data[FAVS] = List<dynamic>();
-
-  return snapshot;
-}
-
 class ArticlesPage extends BasePage {
-  ArticlesPage({Key key, String uid}) : super(key: key, uid: uid);
+  ArticlesPage({Key key}) : super(key: key);
 
   _ArticlesPageState createState() => _ArticlesPageState();
 }
@@ -64,11 +16,13 @@ const String _ERROR_NO_ARTICLES = "There is no articles at the moment.";
 
 class _ArticlesPageState extends State<ArticlesPage> {
   PageController _controller;
+  DBUser user;
 
   @override
   void initState() {
     super.initState();
     _controller = PageController(initialPage: 0);
+    user = FireStoreHandler.instance.user;
   }
 
   @override
@@ -77,11 +31,7 @@ class _ArticlesPageState extends State<ArticlesPage> {
     super.dispose();
   }
 
-  Widget _buildProgress() {
-    return const Center(child: const CircularProgressIndicator());
-  }
-
-  Widget _buildArticleCardEntry(final ArticleData article, {large = false}) {
+  Widget _buildArticleCardEntry(final DBArticle article, {large = false}) {
     return Container(
       margin: EdgeInsets.all(6),
       child: InkWell(
@@ -98,14 +48,15 @@ class _ArticlesPageState extends State<ArticlesPage> {
     );
   }
 
-  List<Widget> _buildPageViews(List<ArticleData> articles, List<dynamic> favs) {
+  List<Widget> _buildPageViews(List<DBArticle> articles) {
     // the best size for Nexus 5X is '6'
     const _EACH_PAGE_COUNT = 4;
 
     final list = <Widget>[];
-    if (articles.length >= 1) {
+    if (articles.length > 0) {
       list.add(_buildArticleCardEntry(articles[0], large: true));
 
+      /// build a section of the view
       int _generatePage(int oldIndex, int max) {
         var childList = <Widget>[];
         int i = oldIndex;
@@ -129,10 +80,13 @@ class _ArticlesPageState extends State<ArticlesPage> {
       }
 
       var currentI = 1;
+
+      //generate uniformed pages, that are filled with articles.
       for (var _ = 0; _ < (articles.length - 1) ~/ _EACH_PAGE_COUNT; _++) {
         currentI = _generatePage(currentI, currentI + _EACH_PAGE_COUNT);
       }
 
+      // generate the remaining, along with padding.
       if (currentI < articles.length) {
         _generatePage(currentI, articles.length);
       }
@@ -143,106 +97,25 @@ class _ArticlesPageState extends State<ArticlesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: Firestore.instance
-          .collection(ARTICLES_HEADERS_COLLECTION)
-          .snapshots(),
-      builder: (BuildContext context,
-          AsyncSnapshot<QuerySnapshot> articles_snapshot) {
-        if (articles_snapshot.hasData) {
-          int count = articles_snapshot.data.documents.length;
+    return FireStoreHandler.instance.articlesHeadersStreamBuilder(
+        builder: (BuildContext context, List<DBArticle> articles) {
+      int count = articles.length;
 
-          if (count > 0) {
-            return StreamBuilder<DocumentSnapshot>(
-              stream: Firestore.instance
-                  .collection(USERS_COLLECTION)
-                  .document(widget.uid)
-                  .snapshots(),
-              builder: (BuildContext context,
-                  AsyncSnapshot<DocumentSnapshot> userdata_snapshot) {
-                if (userdata_snapshot.hasData) {
-                  if (userdata_snapshot.data.exists) {
-                    DocumentSnapshot userdata =
-                        _fillNotFoundUserData(userdata_snapshot.data);
+      if (count > 0) {
+        final children = _buildPageViews(articles);
 
-                    // handles changes on star (favorite)
-                    void favChange(DocumentReference reference, bool isFav) {
-                      final newMap = Map<String, dynamic>();
+        return PageView(
+          controller: _controller,
+          scrollDirection: Axis.vertical,
+          children: children,
+        );
+      }
 
-                      final newFAVS = List.from(userdata.data[FAVS]);
-
-                      if (isFav) {
-                        if (!newFAVS.contains(reference))
-                          newFAVS.add(reference);
-                      } else {
-                        newFAVS.remove(reference);
-                      }
-
-                      newMap[FAVS] = newFAVS;
-
-                      // TODO: fix problem star does not change if clicked inside an article and then 
-                      // the user went back to the main menu (here).
-                      Firestore.instance
-                          .collection(USERS_COLLECTION)
-                          .document(widget.uid)
-                          .updateData(newMap)
-                          .then((e) => setState(() {}));
-                    }
-
-                    final List<ArticleData> articles =
-                        articles_snapshot.data.documents.map(
-                      (e) {
-                        final current = _fillNotFoundArticleData(e);
-                        final article = ArticleData(
-                          mainTitle: current[MAINTITLE],
-                          articlePage: current[PAGEREF],
-                          heroTag: current.documentID,
-                          title: current[TITLE],
-                          textColor: current[TEXTCOLOR],
-                          img: current[IMG],
-                          tags: current[TAGS],
-                          date: current[DATE],
-                          star: userdata.data[FAVS].contains(current.reference),
-                        );
-
-                        article.star.addListener(() =>
-                            favChange(current.reference, article.star.value));
-                        return article;
-                      },
-                    ).toList();
-
-                    final children =
-                        _buildPageViews(articles, userdata.data[FAVS]);
-
-                    return PageView(
-                      controller: _controller,
-                      scrollDirection: Axis.vertical,
-                      children: children,
-                    );
-                  } else {
-                    Firestore.instance
-                        .collection(USERS_COLLECTION)
-                        .document(widget.uid)
-                        .setData(Map<String, dynamic>()).then((v) {
-                          setState(() {
-                          });
-                        });
-                  }
-                }
-                return _buildProgress();
-              },
-            );
-          }
-
-          return const Center(
-              child: const Text(
-            _ERROR_NO_ARTICLES,
-            style: TextStyle(color: Colors.red),
-          ));
-        }
-
-        return _buildProgress();
-      },
-    );
+      return const Center(
+          child: const Text(
+        _ERROR_NO_ARTICLES,
+        style: TextStyle(color: Colors.red),
+      ));
+    });
   }
 }
