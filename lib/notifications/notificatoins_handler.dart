@@ -33,10 +33,20 @@ class NotificationHandler {
     _flutterLocalNotificationsPlugin.initialize(initSettings);
   }
 
+  Future<void> show(int id, String title, String body, {String payload}) {
+    return _flutterLocalNotificationsPlugin.show(
+      _getNormalID(id),
+      title,
+      body,
+      this.details,
+      payload: payload,
+    );
+  }
+
   Future<void> scedule(int id, String title, String body, DateTime date,
-      {String payload}) async {
+      {String payload}) {
     return _flutterLocalNotificationsPlugin.schedule(
-      id,
+      _getScheduleID(id),
       title,
       body,
       date,
@@ -45,15 +55,11 @@ class NotificationHandler {
     );
   }
 
-  Future<void> show(int id, String title, String body, {String payload}) async {
-    return _flutterLocalNotificationsPlugin.show(
-      id,
-      title,
-      body,
-      this.details,
-      payload: payload,
-    );
-  }
+  int _getNormalID(int i) => _NORMAL_ID_BASE + i;
+  int _getScheduleID(int i) => _SCHEDULE_ID_BASE + i;
+
+  static const int _NORMAL_ID_BASE = 0,
+      _SCHEDULE_ID_BASE = 1000;
 
   static NotificationHandler instance = NotificationHandler();
 
