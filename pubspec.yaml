@@ -45,6 +45,9 @@ dependencies:
   # drawing graphs
   charts_flutter: ^0.6.0
 
+  # notifications for flutter
+  flutter_local_notifications: ^0.8.2
+
 
 dev_dependencies:
   flutter_test:

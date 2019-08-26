@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:hayat_app/DB/firestore_handler.dart';
+import 'package:hayat_app/notifications/notificatoins_handler.dart';
 import 'package:hayat_app/pages/page.dart';
 
 class HomePage extends StatefulWidget {
@@ -29,6 +30,8 @@ class _HomePageState extends State<HomePage> {
         .init(widget.uid)
         .then((_) => setState(() => _loading = false));
     _index = 0;
+
+    NotificationHandler.instance.init();
   }
 
   PopupMenuButton _buildAppbarMenu() {
