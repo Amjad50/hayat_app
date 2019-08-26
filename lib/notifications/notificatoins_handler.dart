@@ -1,8 +1,8 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationHandler {
-
-  NotificationHandler(): _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  NotificationHandler()
+      : _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin;
 
@@ -24,7 +24,7 @@ class NotificationHandler {
 
   void init() {
     final androidInitSettings =
-        AndroidInitializationSettings('mipmap/ic_launcher');
+        AndroidInitializationSettings(ANDROID_ICON_LOCATION);
     final iosInitSettings = IOSInitializationSettings();
 
     final initSettings =
@@ -60,5 +60,7 @@ class NotificationHandler {
   static const String ANDROID_CHANNEL_ID =
           "com.hayat.hayat_app/notification_channel",
       ANDROID_CHANNEL_NAME = "Hayat App Channel",
-      ANDROID_CHANNEL_DESCRIPTION = "Notification Channel for Hayat App";
+      ANDROID_CHANNEL_DESCRIPTION = "Notification Channel for Hayat App",
+      ANDROID_ICON_LOCATION =
+          "mipmap/ic_launcher"; // TODO: design a logo and use it.
 }
