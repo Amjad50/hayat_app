@@ -1,20 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:hayat_app/DB/db_task.dart';
+import 'package:hayat_app/DB/firestore_handler.dart';
 import 'package:hayat_app/pages/statistics/score.dart';
-import 'package:hayat_app/pages/tasks/task_data.dart';
 import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
 import 'package:hayat_app/utils.dart';
+import 'package:intl/intl.dart';
 
 const TASKS_SUBCOLLECTION = "tasks";
 const USERS_COLLECTION = "users";
 const USER_TASKS_TYPES = "tasks_types";
 
 class StatisticsHandler {
-  StatisticsHandler({@required this.uid, @required this.onChange});
+  StatisticsHandler({@required this.onChange});
 
   static const DEFAULT_TIMEOUT_DURATION = Duration(seconds: 7);
 
-  final String uid;
   final void Function() onChange;
 
   int userTypesLength;
@@ -25,8 +26,8 @@ class StatisticsHandler {
 
   String _message = "";
 
-  List<Score> _daysScores = [];
-  List<Score> _monthsScores = [];
+  final List<Score> _daysScores = [];
+  final List<Score> _monthsScores = [];
 
   List<Score> get daysScores => _doneInit ? _daysScores : [];
   List<Score> get monthsScores => _doneInit ? _monthsScores : [];
@@ -56,41 +57,29 @@ class StatisticsHandler {
     return false;
   }
 
+  Future<void> reInit() async {
+    _doneInit = true;
+    _message = "";
+    _daysScores.clear();
+    _monthsScores.clear();
+    await init();
+  }
+
   Future<void> init() async {
     _isLoading = true;
+    _doneInit = false;
 
-    if (_update("processing main documents info")) return;
-
-    final preprocessedUserTypes = await Firestore.instance
-        .collection(USERS_COLLECTION)
-        .document(this.uid)
-        .get();
-    userTypesLength = _getUserTypesLength(preprocessedUserTypes.data);
-
-    final documents = await Firestore.instance
-        .collection(USERS_COLLECTION)
-        .document(this.uid)
-        .collection(TASKS_SUBCOLLECTION)
-        .getDocuments()
-        .timeout(
-      DEFAULT_TIMEOUT_DURATION,
-      onTimeout: () {
-        _timedout();
-        onChange();
-        return null;
-      },
-    );
-
-    if (documents == null) return;
-    for (final child in documents.documents) {
-      if (_update("processing document: ${child.documentID}")) return;
-      await _processAndAddDocumentEntry(child).timeout(
-        DEFAULT_TIMEOUT_DURATION,
-        onTimeout: () {
-          _timedout();
-        },
-      );
-    }
+    userTypesLength = FireStoreHandler.instance.user.tasksTypes.length;
+    
+    final dateFormatter = DateFormat('yyyyMMdd');
+     if (_update("fetching tasks info")) return;
+    await FireStoreHandler.instance.processAllUserTasks<void>((date, tasklist, stop) {
+        if(tasklist == null)
+          return;
+        
+        if(_update("processing document: ${dateFormatter.format(date)}")) stop();
+        _daysScores.add(Score(date, _computeScore(tasklist)));
+    }, DEFAULT_TIMEOUT_DURATION, _timedout);
 
     if (_update("processing months data")) return;
     _computeMonths();
@@ -99,18 +88,42 @@ class StatisticsHandler {
     _doneInit = true;
   }
 
-  void _timedout() {
+  QuerySnapshot _timedout() {
     _isLoading = false;
     _doneInit = true;
     _isError = true;
     _message =
         "Connection Timed out!\nMight be because there is no internet connection.";
     onChange();
+    return null;
   }
 
   void dispose() {
     _isLoading = false;
     _doneInit = true;
+  }
+
+  int _computeScore(final List<DBTask> tasks) {
+    int finalScore = 0;
+
+    tasks.forEach((e) {
+      finalScore += _computeTaskScore(e);
+    });
+
+    return finalScore;
+  }
+
+  int _computeTaskScore(DBTask task) {
+    double finalResult = 1;
+
+    finalResult *= task.done / 10;
+    finalResult *= task.durationH;
+
+    if (!(userTypesLength == 0 || task.typeIndex == -1)) {
+      finalResult *= (userTypesLength - task.typeIndex) / userTypesLength;
+    }
+
+    return finalResult.round();
   }
 
   void _computeMonths() {
@@ -133,76 +146,4 @@ class StatisticsHandler {
     }
     _monthsScores.add(Score.month(lastMonth, score));
   }
-
-  Future<void> _processAndAddDocumentEntry(DocumentSnapshot document) async {
-    final date = getDateFromDBDocumentName(document.documentID);
-    if (date == null) return;
-
-    _daysScores.add(Score(date, await _computeScore(document.reference)));
-  }
-
-  Future<int> _computeScore(DocumentReference parent) async {
-    final tasksCollection = parent.collection(TASKS_SUBCOLLECTION);
-    final tasks = (await tasksCollection.getDocuments()).documents;
-
-    int finalScore = 0;
-
-    tasks.forEach((e) {
-      final taskData = _fixTask(e.data);
-      final task = TaskData(
-        typeString: "",
-        tasksType: TasksCollectionType.TODAYS_TASKS,
-        name: taskData[NAME],
-        typeIndex: taskData[TYPE],
-        durationH: (taskData[DURATION] as num).toDouble(),
-        done: taskData[DONE],
-      );
-
-      finalScore += _computeTaskScore(task);
-    });
-
-    return finalScore;
-  }
-
-  int _computeTaskScore(TaskData task) {
-    double finalResult = 1;
-
-    finalResult *= task.done / 10;
-    finalResult *= task.durationH;
-
-    if (!(userTypesLength == 0 || task.typeIndex == -1)) {
-      finalResult *= (userTypesLength - task.typeIndex) / userTypesLength;
-    }
-
-    return finalResult.round();
-  }
-}
-
-Map<String, dynamic> _fixTask(Map<String, dynamic> data) {
-  Map<String, dynamic> newData = data;
-  if (!newData.containsKey(NAME) || !(newData[NAME] is String)) {
-    newData[NAME] = "emptyName";
-  }
-  if (newData.containsKey(TYPE) && (newData[TYPE] is num)) {
-    newData[TYPE] = (newData[TYPE] as num).toInt();
-  } else {
-    newData[TYPE] = -1;
-  }
-  if (!newData.containsKey(DURATION) || !(newData[DURATION] is num)) {
-    newData[DURATION] = 0.0;
-  }
-  if (newData.containsKey(DONE) && (newData[DONE] is num)) {
-    newData[DONE] = (newData[DONE] as num).toInt();
-  } else {
-    newData[DONE] = 0;
-  }
-  return newData;
-}
-
-int _getUserTypesLength(Map<String, dynamic> data) {
-  if (data.containsKey(USER_TASKS_TYPES) &&
-      (data[USER_TASKS_TYPES] is List<dynamic>))
-    return (data[USER_TASKS_TYPES] as List<dynamic>).length;
-  else
-    return 0;
 }
