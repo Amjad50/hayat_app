@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hayat_app/pages/tasks/task_data.dart';
+import 'package:hayat_app/DB/db_task.dart';
 import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
 
 class NewTaskDialog extends StatefulWidget {
@@ -33,12 +33,12 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
 
   void _validateAndSubmit() {
     if (_validateAndSave()) {
-      final task = TaskData(
+      final task = DBTask(
+        null, // documentRef
         name: _name,
         typeIndex: _typeIndex,
         typeString: widget.userTypes[_typeIndex],
         durationH: _durationH,
-        tasksType: widget.tasksType,
         done: 0,
       );
 
@@ -134,17 +134,6 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
       child: const Text(
         "SUBMIT",
         style: _white,
-      ),
-    );
-  }
-
-  Widget _buildCancelButton() {
-    return FlatButton(
-      onPressed: () {
-        Navigator.pop(context);
-      },
-      child: const Text(
-        "CANCEL",
       ),
     );
   }

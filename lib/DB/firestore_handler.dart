@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:hayat_app/DB/db_article.dart';
 import 'package:hayat_app/DB/db_user.dart';
+import 'package:hayat_app/DB/db_task.dart';
+import 'package:hayat_app/pages/tasks/tasks_collection_types.dart';
 import 'package:hayat_app/utils.dart';
 
 const String USERS_COLLECTION = "users",
@@ -36,7 +38,8 @@ class FireStoreHandler {
 
     if (!userDoc.exists) {
       await putData(userDoc.reference, DBUser.defaults);
-      _user = DBUser.fromMap(userDataRef, Map<String, dynamic>.from(DBUser.defaults));
+      _user = DBUser.fromMap(
+          userDataRef, Map<String, dynamic>.from(DBUser.defaults));
     } else {
       _user = DBUser.fromMap(userDataRef, userDoc.data);
     }
@@ -70,5 +73,62 @@ class FireStoreHandler {
         }
       },
     );
+  }
+
+  Widget tasksStreamBuilder(
+    DateTime date,
+    TasksCollectionType tasksType, {
+    @required Widget Function(BuildContext, List<DBTask>) builder,
+  }) {
+    final tasksRef = _getTasksRef(date, tasksType);
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: tasksRef.snapshots(),
+      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+        if (snapshot.hasData) {
+          final tasks = snapshot.data.documents
+              .map<DBTask>((e) => DBTask.fromMap(
+                    e.reference,
+                    e.data,
+                    user.tasksTypes,
+                  ))
+              .toList();
+          return builder(context, tasks);
+        } else {
+          return buildLoadingWidget();
+        }
+      },
+    );
+  }
+
+  Future<void> addTask(
+      DateTime date, TasksCollectionType tasksType, DBTask task) async {
+    final tasksRef = _getTasksRef(date, tasksType);
+
+    await tasksRef.add(task.toMap());
+  }
+
+  Future<List<DBTask>> getTasks(
+      DateTime date, TasksCollectionType tasksType) async {
+    final tasksRef = _getTasksRef(date, tasksType);
+
+    final docs = await _getDocuments(tasksRef);
+
+    return docs
+        .map(
+          (e) => DBTask.fromMap(e.reference, e.data, user.tasksTypes),
+        )
+        .toList();
+  }
+
+  CollectionReference _getTasksRef(DateTime date, TasksCollectionType tasksType) {
+    if (tasksType == TasksCollectionType.TODAYS_TASKS)
+      return user.getTasksRef(date);
+    else
+      return user.getRoutineTasksRef();
+  }
+
+  Future<List<DocumentSnapshot>> _getDocuments(CollectionReference ref) async {
+    return (await ref.getDocuments()).documents;
   }
 }
